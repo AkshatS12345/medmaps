@@ -225,10 +225,10 @@ export default function MedMaps() {
     }
   };
 
-  const handleCheckout = async (option, hotelName) => {
+  const handleCheckout = async (option, hotelName, flightId) => {
     const hospitalId = option.hospital_id || option.id || option.name;
     try {
-      const res = await api.checkout(sessionId, hospitalId, hotelName);
+      const res = await api.checkout(sessionId, hospitalId, hotelName, flightId);
       setCheckout(res);
     } catch {
       /* API never returns errors per spec */
@@ -259,6 +259,22 @@ export default function MedMaps() {
         hospital_id: option.hospital_id,
       },
     });
+
+    // A chosen flight is its own line item.
+    if (option.flight) {
+      addItem({
+        category: "flight",
+        itemName: `${option.flight.carrier} — ${option.flight.origin}→${option.flight.destination}`,
+        description: `${
+          option.flight.stops === 0 ? "Non-stop" : `${option.flight.stops} stop`
+        } · ${option.flight.duration}`,
+        provider: option.flight.carrier,
+        location,
+        unitPrice: Number(option.flight.price) || 0,
+        quantity: 1,
+        metadata: { flight_id: option.flight.flight_id },
+      });
+    }
 
     // A chosen recovery hotel is a separate real line item, not part of the procedure.
     if (option.hotel) {
