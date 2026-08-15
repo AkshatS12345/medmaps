@@ -18,6 +18,8 @@ export default function RightResultsPanel({
   onAddToCart,
   onCheckout,
   onBack,
+  selected,
+  onSelect,
 }) {
   return (
     <div className="h-full w-full flex flex-col bg-slate-900/70 backdrop-blur-xl border-l border-white/10">
@@ -51,7 +53,17 @@ export default function RightResultsPanel({
         )}
       </div>
 
-      {/* Tabs */}
+      {/* A chosen facility takes over the panel as a guided trip builder. */}
+      {selected ? (
+        <div className="flex-1 overflow-y-auto px-5 py-4">
+          <TripBuilder
+            option={selected}
+            intake={intake}
+            onBack={() => onSelect(null)}
+            onBook={onCheckout}
+          />
+        </div>
+      ) : (
       <Tabs
         value={activeTab}
         onValueChange={onTabChange}
@@ -104,6 +116,7 @@ export default function RightResultsPanel({
           )}
         </TabsContent>
       </Tabs>
+      )}
     </div>
   );
 }
