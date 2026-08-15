@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import React from "react";
 import { AlertTriangle } from "lucide-react";
 import { money, percent, percentRange } from "@/lib/format";
-import { flyToCart } from "@/lib/cartFly";
 
 function Spread({ spread }) {
   if (!spread) return null;
@@ -35,10 +34,10 @@ function RankInversion({ ri }) {
   );
 }
 
-// Cards, not a table: seven columns never fit the results panel and pushed the
-// action buttons off-screen. Rank is explicit so the expected-cost ordering reads.
-function OptionRow({ o, rank, onAddToCart }) {
-  const [open, setOpen] = useState(false);
+// Every figure is visible at once — nothing behind a toggle — and each card has
+// exactly one action. The package is assembled in the trip builder, which is the
+// only place anything reaches the cart.
+function OptionRow({ o, rank, onSelect }) {
   return (
     <div className="rounded-xl bg-slate-800/40 border border-white/10 p-3 hover:border-white/20 transition-colors">
       <div className="flex items-start gap-2.5">
@@ -64,60 +63,41 @@ function OptionRow({ o, rank, onAddToCart }) {
         </div>
       </div>
 
-      <div className="mt-3">
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="w-full h-8 text-xs rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white font-semibold transition-colors"
-        >
-          {open ? "Hide breakdown" : "Book"}
-        </button>
+      <div className="mt-2.5 grid grid-cols-3 gap-2 text-[11px]">
+        <div>
+          <p className="text-slate-500">Sticker</p>
+          <p className="text-slate-300">{money(o.base_cost)}</p>
+        </div>
+        <div>
+          <p className="text-slate-500">Your cost</p>
+          <p className="text-slate-200">{money(o.out_of_pocket)}</p>
+        </div>
+        <div>
+          <p className="text-slate-500">Complication rate</p>
+          <p className="text-slate-200">
+            {percent(o.complication_rate)}
+            {o.complication_ci && (
+              <span className="text-slate-500">
+                {" "}
+                {percentRange(o.complication_ci)}
+              </span>
+            )}
+          </p>
+        </div>
       </div>
 
-      {open && (
-        <div className="mt-3 pt-3 border-t border-white/10 space-y-3">
-          <p className="text-[10px] uppercase tracking-wide text-slate-500">
-            Price breakdown
-          </p>
-          <div className="grid grid-cols-3 gap-2 text-[11px]">
-            <div>
-              <p className="text-slate-500">Sticker</p>
-              <p className="text-slate-300">{money(o.base_cost)}</p>
-            </div>
-            <div>
-              <p className="text-slate-500">Your cost</p>
-              <p className="text-slate-200">{money(o.out_of_pocket)}</p>
-            </div>
-            <div>
-              <p className="text-slate-500">Complication rate</p>
-              <p className="text-slate-200">
-                {percent(o.complication_rate)}
-                {o.complication_ci && (
-                  <span className="text-slate-500">
-                    {" "}
-                    {percentRange(o.complication_ci)}
-                  </span>
-                )}
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={(e) => {
-              flyToCart(e.currentTarget);
-              onAddToCart?.(o);
-            }}
-            className="w-full h-8 text-xs rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-semibold transition-colors"
-          >
-            Add to Cart
-          </button>
-        </div>
-      )}
+      <button
+        type="button"
+        onClick={() => onSelect?.(o)}
+        className="mt-3 w-full h-9 text-xs rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white font-semibold transition-colors"
+      >
+        Select this hospital →
+      </button>
     </div>
   );
 }
 
-function OptionsTable({ options, onAddToCart }) {
+function OptionsList({ options, onSelect }) {
   // Options arrive sorted by expected cost. Do not re-sort.
   return (
     <div className="space-y-2.5">
@@ -129,25 +109,23 @@ function OptionsTable({ options, onAddToCart }) {
           key={o.hospital_id || i}
           o={o}
           rank={i + 1}
-          onAddToCart={onAddToCart}
+          onSelect={onSelect}
         />
       ))}
     </div>
   );
 }
 
-export default function DomesticResults({ data, onAddToCart }) {
+export default function DomesticResults({ data, onSelect }) {
   if (!data) return null;
   const { options, price_spread, rank_inversion, degraded } = data;
   return (
     <div className="space-y-4">
-      {degraded && (
-        <p className="text-[11px] text-slate-500">cached estimates</p>
-      )}
+      {degraded && <p className="text-[11px] text-slate-500">cached estimates</p>}
       <Spread spread={price_spread} />
       <RankInversion ri={rank_inversion} />
       {Array.isArray(options) && options.length > 0 && (
-        <OptionsTable options={options} onAddToCart={onAddToCart} />
+        <OptionsList options={options} onSelect={onSelect} />
       )}
     </div>
   );
