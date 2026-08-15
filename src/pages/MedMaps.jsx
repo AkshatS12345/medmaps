@@ -49,6 +49,26 @@ function globeMarkers(international) {
   ];
 }
 
+// Top eligible destinations, one per country, for the globe overlay.
+function globeLegend(international) {
+  const opts = (international?.options || []).filter(
+    (o) => !o.excluded_by_constraint
+  );
+  const seen = new Map();
+  for (const o of opts) {
+    const prev = seen.get(o.country);
+    if (!prev || (o.savings_vs_domestic || 0) > prev.savings) {
+      seen.set(o.country, {
+        country: o.country,
+        savings: Number(o.savings_vs_domestic) || 0,
+      });
+    }
+  }
+  return [...seen.values()]
+    .sort((a, b) => b.savings - a.savings)
+    .slice(0, 4);
+}
+
 const EASE = [0.22, 1, 0.36, 1];
 const DURATION = 0.7;
 
@@ -289,7 +309,10 @@ export default function MedMaps() {
             animate={{ x: status === "results" ? "-100%" : "0%" }}
             transition={{ duration: DURATION, ease: EASE }}
           >
-            <Globe markers={globeMarkers(international)} />
+            <Globe
+              markers={globeMarkers(international)}
+              legend={globeLegend(international)}
+            />
           </motion.div>
 
           {/* Results panel — right half, slides in from the right */}
