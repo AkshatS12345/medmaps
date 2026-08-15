@@ -3,7 +3,7 @@ import { MapPin, Plus } from "lucide-react";
 
 export default function Header() {
   return (
-    <header className="fixed top-0 left-0 right-0 z-30 h-16 bg-[hsl(var(--primary))] text-white shadow-lg">
+    <header className="relative z-30 h-16 flex-shrink-0 bg-slate-950 text-white shadow-lg border-b border-white/10">
       <div className="h-full mx-auto max-w-screen-2xl px-6 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className="relative w-9 h-9 rounded-xl bg-blue-500 flex items-center justify-center shadow-md">

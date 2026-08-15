@@ -12,19 +12,26 @@ export default function MedMaps() {
   };
 
   return (
-    <div className="min-h-screen relative bg-slate-950">
+    <div className="h-screen bg-slate-900 flex flex-col overflow-hidden">
       <Header />
-
-      {/* 3D globe background */}
-      <div className="fixed inset-0 z-0">
-        <Globe />
-      </div>
-
-      <main className="relative z-10 pt-16">
-        <div className="min-h-[calc(100vh-4rem)] px-4 sm:px-8 py-8 flex items-center">
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 min-h-0">
+        {/* Left panel — intake form, vertically centered */}
+        <div className="flex items-center justify-center p-6 overflow-y-auto bg-slate-900">
           <LeftIntakePanel onCalculate={handleCalculate} calculating={calculating} />
         </div>
-      </main>
+
+        {/* Right panel — 3D spinning globe */}
+        <div className="relative min-h-0 bg-gradient-to-br from-slate-900 via-slate-950 to-black">
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(circle at 50% 50%, rgba(13,148,136,0.12), transparent 60%)",
+            }}
+          />
+          <Globe />
+        </div>
+      </div>
     </div>
   );
 }
