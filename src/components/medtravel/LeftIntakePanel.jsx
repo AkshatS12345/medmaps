@@ -1,7 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, ScanSearch, Loader2 } from "lucide-react";
 
 const PROCEDURES = ["Knee Replacement", "Hip Replacement", "Lasik"];
+
+// Recovery window (in days) before it's clinically safe to fly post-procedure.
+const RECOVERY_DAYS = {
+  "Knee Replacement": 14,
+  "Hip Replacement": 14,
+  Lasik: 3,
+};
 
 const inputClass =
   "inline-block border-b-2 border-blue-400/80 bg-transparent text-white font-semibold text-center outline-none px-1 rounded-none focus:border-emerald-400 transition-colors";
@@ -28,9 +36,29 @@ export default function LeftIntakePanel({ onCalculate, calculating }) {
   const [location, setLocation] = useState("New York, NY");
   const [age, setAge] = useState(54);
   const [procedure, setProcedure] = useState(PROCEDURES[0]);
-  const [targetDate, setTargetDate] = useState(defaultDate);
+  const [departureDate, setDepartureDate] = useState(defaultDate);
+  const [returnDate, setReturnDate] = useState("");
   const [plan, setPlan] = useState("");
   const [deductible, setDeductible] = useState(5000);
+
+  const recoveryDays = RECOVERY_DAYS[procedure] ?? 7;
+
+  // Auto-set the Return Date to Departure + recovery window whenever the
+  // procedure or departure date changes. The user can still override it.
+  useEffect(() => {
+    if (!departureDate) return;
+    const d = new Date(departureDate + "T00:00:00");
+    d.setDate(d.getDate() + recoveryDays);
+    setReturnDate(d.toISOString().slice(0, 10));
+  }, [procedure, departureDate, recoveryDays]);
+
+  // Warn if the chosen return date falls inside the recommended recovery window.
+  const isEarlyReturn = (() => {
+    if (!departureDate || !returnDate) return false;
+    const dep = new Date(departureDate + "T00:00:00").getTime();
+    const ret = new Date(returnDate + "T00:00:00").getTime();
+    return ret - dep < recoveryDays * 86400000;
+  })();
 
   return (
     <div className="w-full max-w-md">
@@ -54,7 +82,7 @@ export default function LeftIntakePanel({ onCalculate, calculating }) {
 
         {/* Mad Libs paragraph */}
         <div className="px-6 py-6">
-          <p className="text-base leading-relaxed text-slate-200">
+          <div className="text-base leading-relaxed text-slate-200">
             Hello, my name is{" "}
             <input
               type="text"
@@ -97,12 +125,35 @@ export default function LeftIntakePanel({ onCalculate, calculating }) {
             on or around{" "}
             <input
               type="date"
-              value={targetDate}
-              onChange={(e) => setTargetDate(e.target.value)}
+              value={departureDate}
+              onChange={(e) => setDepartureDate(e.target.value)}
               className={`${inputClass} w-40 [color-scheme:dark]`}
-              aria-label="Target Date"
+              aria-label="Departure Date"
             />
-            . My insurance coverage is under{" "}
+            . I plan to return home on{" "}
+            <input
+              type="date"
+              value={returnDate}
+              onChange={(e) => setReturnDate(e.target.value)}
+              className={`${inputClass} w-40 [color-scheme:dark]`}
+              aria-label="Return Date"
+            />
+            .{" "}
+            <AnimatePresence>
+              {isEarlyReturn && (
+                <motion.span
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.3 }}
+                  className="block w-full mt-2 text-xs text-amber-400 bg-amber-500/10 border border-amber-400/30 rounded-lg px-2.5 py-1.5"
+                >
+                  ⚠️ Clinical guidelines recommend a {recoveryDays}-day recovery
+                  window before flying. Returning early increases risk.
+                </motion.span>
+              )}
+            </AnimatePresence>{" "}
+            My insurance coverage is under{" "}
             <input
               type="text"
               value={plan}
@@ -121,7 +172,7 @@ export default function LeftIntakePanel({ onCalculate, calculating }) {
               aria-label="Remaining Deductible"
             />
             .
-          </p>
+          </div>
         </div>
 
         {/* CTA */}
@@ -136,7 +187,9 @@ export default function LeftIntakePanel({ onCalculate, calculating }) {
             ) : (
               <ScanSearch className="w-5 h-5" />
             )}
-            {calculating ? "Scanning global options…" : "Scan Global Options & Calculate Costs"}
+            {calculating
+              ? "Scanning global options…"
+              : "Scan Global Options & Calculate Costs"}
           </button>
         </div>
       </div>
