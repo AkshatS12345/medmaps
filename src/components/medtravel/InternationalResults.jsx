@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Plane } from "lucide-react";
 import { money } from "@/lib/format";
+import { api } from "@/lib/api";
 
 // Stacked bar split into Procedure / Travel / Complication coverage. Segment
 // widths are sized against true_cost (the API's authoritative total).
