@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Plane } from "lucide-react";
 import { money } from "@/lib/format";
 import { api } from "@/lib/api";
+import { flyToCart } from "@/lib/cartFly";
 
 // Stacked bar split into Procedure / Travel / Complication coverage. Segment
 // widths are sized against true_cost (the API's authoritative total).
@@ -237,7 +238,10 @@ function Card({ o, onAddToCart, onCheckout }) {
       <div className="mt-3 flex gap-2">
         <button
           type="button"
-          onClick={() => onAddToCart?.({ ...o, hotel })}
+          onClick={(e) => {
+            flyToCart(e.currentTarget);
+            onAddToCart?.({ ...o, hotel });
+          }}
           disabled={excluded}
           className="flex-1 h-9 rounded-lg bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors"
         >

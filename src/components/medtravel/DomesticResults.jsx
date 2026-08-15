@@ -1,6 +1,7 @@
 import React from "react";
 import { AlertTriangle } from "lucide-react";
 import { money, percent, percentRange } from "@/lib/format";
+import { flyToCart } from "@/lib/cartFly";
 
 function Spread({ spread }) {
   if (!spread) return null;
@@ -82,7 +83,10 @@ function OptionsTable({ options, onCheckout, onAddToCart }) {
                   <div className="flex items-center justify-end gap-1.5">
                     <button
                       type="button"
-                      onClick={() => onAddToCart?.(o)}
+                      onClick={(e) => {
+                        flyToCart(e.currentTarget);
+                        onAddToCart?.(o);
+                      }}
                       className="text-xs rounded-lg bg-slate-700 hover:bg-slate-600 text-white px-2.5 py-1 font-semibold transition-colors"
                     >
                       Add to Cart
