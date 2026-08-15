@@ -3,13 +3,14 @@ import { ArrowLeft, Check, Plane, BedDouble, ShieldCheck, Hospital } from "lucid
 import { money, percent } from "@/lib/format";
 import { api } from "@/lib/api";
 
-const STEPS = [
+const ALL_STEPS = [
   { key: "hospital", label: "Facility", icon: Hospital },
   { key: "travel", label: "Travel & stay", icon: Plane },
   { key: "coverage", label: "Coverage", icon: ShieldCheck },
 ];
 
-function StepBar({ current, onJump }) {
+function StepBar({ current, steps, onJump }) {
+  const STEPS = steps;
   return (
     <div className="flex items-center gap-1.5">
       {STEPS.map((s, i) => {
@@ -58,7 +59,7 @@ function Line({ label, sub, amount, muted }) {
   );
 }
 
-export default function TripBuilder({ option, intake, onBack, onBook }) {
+export default function TripBuilder({ option, intake, onBack, onBook, onAddToCart }) {
   const [step, setStep] = useState("hospital");
   const [hotels, setHotels] = useState(null);
   const [hotel, setHotel] = useState(null);
@@ -87,8 +88,10 @@ export default function TripBuilder({ option, intake, onBack, onBook }) {
       Number(option.warranty_cost || 0)
     : Number(option.expected_cost);
 
+  // Domestic care has no flight and no recovery hotel, so that step is skipped.
+  const order = isIntl ? ["hospital", "travel", "coverage"] : ["hospital", "coverage"];
   const next = () =>
-    setStep((s) => (s === "hospital" ? "travel" : s === "travel" ? "coverage" : s));
+    setStep((s) => order[Math.min(order.indexOf(s) + 1, order.length - 1)]);
 
   return (
     <div className="space-y-4">
@@ -100,7 +103,11 @@ export default function TripBuilder({ option, intake, onBack, onBook }) {
           <ArrowLeft className="w-3.5 h-3.5" />
           All options
         </button>
-        <StepBar current={step} onJump={setStep} />
+        <StepBar
+          current={step}
+          steps={ALL_STEPS.filter((s) => (isIntl ? true : s.key !== "travel"))}
+          onJump={setStep}
+        />
       </div>
 
       {/* Always-visible running package */}
@@ -278,7 +285,10 @@ export default function TripBuilder({ option, intake, onBack, onBook }) {
             </p>
           )}
           <button
-            onClick={() => onBook(option, hotel?.name)}
+            onClick={() => {
+              onAddToCart?.({ ...option, hotel });
+              onBook(option, hotel?.name);
+            }}
             className="w-full h-11 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold text-sm transition-colors"
           >
             Review & book — {money(total)}
