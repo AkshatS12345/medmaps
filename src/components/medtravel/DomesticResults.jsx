@@ -64,43 +64,60 @@ function OptionRow({ o, rank, onAddToCart }) {
         </div>
       </div>
 
-      <div className="mt-2.5 grid grid-cols-3 gap-2 text-[11px]">
-        <div>
-          <p className="text-slate-500">Sticker</p>
-          <p className="text-slate-300">{money(o.base_cost)}</p>
-        </div>
-        <div>
-          <p className="text-slate-500">Your cost</p>
-          <p className="text-slate-200">{money(o.out_of_pocket)}</p>
-        </div>
-        <div>
-          <p className="text-slate-500">Complication rate</p>
-          <p className="text-slate-200">
-            {percent(o.complication_rate)}
-            {o.complication_ci && (
-              <span className="text-slate-500">
-                {" "}
-                {percentRange(o.complication_ci)}
-              </span>
-            )}
-          </p>
-        </div>
+      <div className="mt-3">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="w-full h-8 text-xs rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white font-semibold transition-colors"
+        >
+          {open ? "Hide breakdown" : "Book"}
+        </button>
       </div>
 
-      {/* One action per card. The package is assembled in the trip builder,
-          which is also the only place anything reaches the cart. */}
-      <button
-        type="button"
-        onClick={() => onCheckout(o)}
-        className="mt-3 w-full h-9 text-xs rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white font-semibold transition-colors"
-      >
-        Select this hospital →
-      </button>
+      {open && (
+        <div className="mt-3 pt-3 border-t border-white/10 space-y-3">
+          <p className="text-[10px] uppercase tracking-wide text-slate-500">
+            Price breakdown
+          </p>
+          <div className="grid grid-cols-3 gap-2 text-[11px]">
+            <div>
+              <p className="text-slate-500">Sticker</p>
+              <p className="text-slate-300">{money(o.base_cost)}</p>
+            </div>
+            <div>
+              <p className="text-slate-500">Your cost</p>
+              <p className="text-slate-200">{money(o.out_of_pocket)}</p>
+            </div>
+            <div>
+              <p className="text-slate-500">Complication rate</p>
+              <p className="text-slate-200">
+                {percent(o.complication_rate)}
+                {o.complication_ci && (
+                  <span className="text-slate-500">
+                    {" "}
+                    {percentRange(o.complication_ci)}
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={(e) => {
+              flyToCart(e.currentTarget);
+              onAddToCart?.(o);
+            }}
+            className="w-full h-8 text-xs rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-semibold transition-colors"
+          >
+            Add to Cart
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
-function OptionsTable({ options, onCheckout, onAddToCart }) {
+function OptionsTable({ options, onAddToCart }) {
   // Options arrive sorted by expected cost. Do not re-sort.
   return (
     <div className="space-y-2.5">
@@ -112,7 +129,6 @@ function OptionsTable({ options, onCheckout, onAddToCart }) {
           key={o.hospital_id || i}
           o={o}
           rank={i + 1}
-          onCheckout={onCheckout}
           onAddToCart={onAddToCart}
         />
       ))}
@@ -120,7 +136,7 @@ function OptionsTable({ options, onCheckout, onAddToCart }) {
   );
 }
 
-export default function DomesticResults({ data, onCheckout, onAddToCart }) {
+export default function DomesticResults({ data, onAddToCart }) {
   if (!data) return null;
   const { options, price_spread, rank_inversion, degraded } = data;
   return (
@@ -131,11 +147,7 @@ export default function DomesticResults({ data, onCheckout, onAddToCart }) {
       <Spread spread={price_spread} />
       <RankInversion ri={rank_inversion} />
       {Array.isArray(options) && options.length > 0 && (
-        <OptionsTable
-          options={options}
-          onCheckout={onCheckout}
-          onAddToCart={onAddToCart}
-        />
+        <OptionsTable options={options} onAddToCart={onAddToCart} />
       )}
     </div>
   );

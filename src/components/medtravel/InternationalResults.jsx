@@ -223,41 +223,49 @@ function Card({ o, onAddToCart }) {
         </p>
       )}
 
-      {/* Everything relevant is always visible — nothing hidden behind a toggle. */}
-      <div className="mt-3 pt-3 border-t border-white/10 space-y-1.5">
-        <div className="grid grid-cols-3 gap-2 text-[11px]">
-          <div>
-            <p className="text-slate-500">Procedure</p>
-            <p className="text-slate-200">{money(o.base_cost)}</p>
-          </div>
-          <div>
-            <p className="text-slate-500">Flight + stay</p>
-            <p className="text-slate-200">{money(o.travel_cost)}</p>
-          </div>
-          <div>
-            <p className="text-slate-500">Coverage</p>
-            <p className="text-slate-200">{money(o.warranty_cost)}</p>
-          </div>
-        </div>
-        {o.travel_source && o.travel_source.flights && (
-          <p className="text-[10px] text-slate-500">{o.travel_source.flights}</p>
-        )}
+      {!excluded && (
+        <HotelPicker o={o} selected={hotel} onSelect={setHotel} />
+      )}
+
+      <div className="mt-3">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          disabled={excluded}
+          className="w-full h-9 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors"
+        >
+          {open ? "Hide breakdown" : "Book"}
+        </button>
       </div>
 
-      {/* Hotel choice happens inside the trip builder, one step at a time. */}
-      <button
-        type="button"
-        onClick={() => onCheckout?.(o)}
-        disabled={excluded}
-        className="mt-3 w-full h-9 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold flex items-center justify-center transition-colors"
-      >
-        {excluded ? "Outside your travel limit" : "Select this hospital →"}
-      </button>
+      {open && !excluded && (
+        <div className="mt-3 pt-3 border-t border-white/10 space-y-3">
+          <p className="text-[10px] uppercase tracking-wide text-slate-500">
+            Price breakdown
+          </p>
+          <StackedBar o={o} />
+          {o.travel_source && o.travel_source.flights && (
+            <p className="text-[10px] text-slate-500">
+              {o.travel_source.flights}
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={(e) => {
+              flyToCart(e.currentTarget);
+              onAddToCart?.({ ...o, hotel });
+            }}
+            className="w-full h-9 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors"
+          >
+            Add to Cart
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
-export default function InternationalResults({ data, onAddToCart, onCheckout }) {
+export default function InternationalResults({ data, onAddToCart }) {
   if (!data) return null;
   const { options, degraded } = data;
   const list = Array.isArray(options) ? options : [];
@@ -269,7 +277,7 @@ export default function InternationalResults({ data, onAddToCart, onCheckout }) 
       {top && <RiskPanel o={top} />}
       <div className="space-y-3">
         {list.map((o, i) => (
-          <Card key={i} o={o} onAddToCart={onAddToCart} onCheckout={onCheckout} />
+          <Card key={i} o={o} onAddToCart={onAddToCart} />
         ))}
       </div>
     </div>
