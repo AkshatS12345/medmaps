@@ -99,6 +99,7 @@ export default function RightResultsPanel({
             <InternationalResults
               data={international}
               onAddToCart={onAddToCart}
+              onCheckout={onCheckout}
             />
           )}
         </TabsContent>
