@@ -1,6 +1,8 @@
 import React from "react";
 import { ArrowLeft, BadgeCheck } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import FacilityCard from "./FacilityCard";
+import FlightPathTab from "./FlightPathTab";
 
 export default function RightResultsPanel({ facilities, onBack }) {
   return (
@@ -31,12 +33,41 @@ export default function RightResultsPanel({ facilities, onBack }) {
         </div>
       </div>
 
-      {/* Scrollable card list */}
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
-        {facilities.map((f) => (
-          <FacilityCard key={f.id} facility={f} />
-        ))}
-      </div>
+      {/* Tabs */}
+      <Tabs defaultValue="centers" className="flex-1 flex flex-col min-h-0">
+        <div className="px-5 pt-3 pb-3 border-b border-white/10 flex-shrink-0">
+          <TabsList className="bg-slate-800/60 border border-white/10">
+            <TabsTrigger
+              value="centers"
+              className="text-slate-300 data-[state=active]:bg-slate-700 data-[state=active]:text-white"
+            >
+              Accredited Centers
+            </TabsTrigger>
+            <TabsTrigger
+              value="flights"
+              className="text-slate-300 data-[state=active]:bg-slate-700 data-[state=active]:text-white"
+            >
+              Cheapest Flight Path
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent
+          value="centers"
+          className="flex-1 overflow-y-auto px-5 py-4 space-y-3 mt-0 data-[state=inactive]:hidden"
+        >
+          {facilities.map((f) => (
+            <FacilityCard key={f.id} facility={f} />
+          ))}
+        </TabsContent>
+
+        <TabsContent
+          value="flights"
+          className="flex-1 overflow-y-auto mt-0 data-[state=inactive]:hidden"
+        >
+          <FlightPathTab />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
