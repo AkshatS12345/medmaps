@@ -85,7 +85,14 @@ export function CartProvider({ children }) {
     };
     entry.totalPrice = entry.unitPrice * entry.quantity;
 
+    // The cart holds exactly one trip: one procedure, one hotel, one flight.
+    // Choosing a different hospital replaces the previous choice rather than
+    // stacking a second surgery.
+    const SINGLE = ["procedure", "hotel", "flight"];
     setItems((prev) => {
+      if (SINGLE.includes(entry.category)) {
+        return [...prev.filter((i) => i.category !== entry.category), entry];
+      }
       const matchIdx = prev.findIndex(
         (i) =>
           i.category === entry.category &&
