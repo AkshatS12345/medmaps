@@ -56,12 +56,13 @@ export default function RightResultsPanel({
 
       {/* A chosen facility takes over the panel as a guided trip builder. */}
       {selected ? (
-        <div className="flex-1 overflow-y-auto px-5 py-4">
+        <div className="flex-1 overflow-y-auto px-5 py-4 max-w-2xl w-full mx-auto">
           <TripBuilder
             option={selected}
             intake={intake}
             onBack={() => onSelect(null)}
             onBook={onCheckout}
+            onAddToCart={onAddToCart}
           />
         </div>
       ) : (
