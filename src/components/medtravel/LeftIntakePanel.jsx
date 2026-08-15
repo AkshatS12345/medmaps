@@ -1,91 +1,134 @@
 import React, { useState } from "react";
-import { Sparkles, User } from "lucide-react";
+import { Sparkles, ScanSearch } from "lucide-react";
 
-const DEFAULT_TEMPLATE =
-  "Hi, my name is David. I am a 54-year-old in need of a Total Knee Replacement. My insurance provider is Blue Cross Blue Shield with a remaining deductible of $5,000. I am looking for accredited international alternatives with bundled post-op coverage.";
-
-const TAGS = [
+const PROCEDURES = [
   "Knee Replacement",
   "Hip Replacement",
+  "Lasik",
   "Cataract Surgery",
   "Coronary Bypass",
-  "Spinal Fusion",
 ];
 
-const KNOWN_PROCEDURES = [
-  "Total Knee Replacement",
-  "Knee Replacement",
-  "Hip Replacement",
-  "Cataract Surgery",
-  "Coronary Bypass",
-  "Spinal Fusion",
+const INSURERS = [
+  "Blue Cross",
+  "Aetna",
+  "UnitedHealthcare",
+  "Cigna",
+  "Humana",
+  "Uninsured",
 ];
+
+const inputClass =
+  "inline-block border-b-2 border-blue-400 bg-transparent text-white font-bold text-center outline-none px-1 rounded-none focus:border-emerald-400 transition-colors";
+
+const selectStyle = {
+  backgroundImage:
+    "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>\")",
+  backgroundRepeat: "no-repeat",
+  backgroundPosition: "right 0.15rem center",
+  backgroundSize: "0.8em",
+  appearance: "none",
+  WebkitAppearance: "none",
+  MozAppearance: "none",
+};
 
 export default function LeftIntakePanel({ onCalculate, calculating }) {
-  const [text, setText] = useState(DEFAULT_TEMPLATE);
-
-  const applyTag = (tag) => {
-    setText((prev) => {
-      // Replace any known procedure mention with the chosen tag.
-      let next = prev;
-      KNOWN_PROCEDURES.forEach((p) => {
-        if (p !== tag) {
-          next = next.replace(new RegExp(p, "g"), tag);
-        }
-      });
-      return next;
-    });
-  };
+  const [name, setName] = useState("David");
+  const [age, setAge] = useState(54);
+  const [procedure, setProcedure] = useState(PROCEDURES[0]);
+  const [insurer, setInsurer] = useState(INSURERS[0]);
+  const [deductible, setDeductible] = useState(5000);
 
   return (
-    <div className="w-full lg:w-[360px] flex-shrink-0">
-      <div className="rounded-2xl bg-white/85 backdrop-blur-md shadow-2xl border border-white/60 overflow-hidden">
-        <div className="px-5 pt-5 pb-4 border-b border-slate-100 bg-gradient-to-b from-slate-50/80 to-transparent">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-              <User className="w-4 h-4 text-white" />
+    <div className="w-full max-w-xl">
+      <div className="rounded-2xl bg-white/10 backdrop-blur-xl shadow-2xl border border-white/20 overflow-hidden">
+        {/* Title */}
+        <div className="px-6 pt-6 pb-4 border-b border-white/10">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-blue-500/30 border border-blue-300/30 flex items-center justify-center">
+              <Sparkles className="w-4.5 h-4.5 text-blue-200" />
             </div>
             <div>
-              <h2 className="font-heading text-base font-semibold text-slate-900 leading-tight">
+              <h2 className="font-heading text-lg font-semibold text-white leading-tight">
                 AI Travel & Clinical Intake
               </h2>
-              <p className="text-xs text-slate-500">Describe your needs in plain language</p>
+              <p className="text-xs text-slate-300">
+                Fill in the blanks — we'll match you globally
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="p-5 space-y-4">
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            rows={7}
-            className="w-full rounded-xl border border-slate-200 bg-white/90 p-3.5 text-sm leading-relaxed text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition resize-none"
-          />
-
-          <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
-              Quick swap procedure
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {TAGS.map((tag) => (
-                <button
-                  key={tag}
-                  onClick={() => applyTag(tag)}
-                  className="px-2.5 py-1.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 hover:bg-blue-100 hover:text-blue-700 transition-colors border border-slate-200"
-                >
-                  {tag}
-                </button>
+        {/* Mad Libs paragraph */}
+        <div className="px-6 py-6">
+          <p className="text-lg leading-loose text-slate-200">
+            Hello, my name is{" "}
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className={`${inputClass} w-28`}
+              aria-label="Name"
+            />{" "}
+            and I am{" "}
+            <input
+              type="number"
+              min={0}
+              value={age}
+              onChange={(e) => setAge(Number(e.target.value) || 0)}
+              className={`${inputClass} w-14`}
+              aria-label="Age"
+            />{" "}
+            years old. I am currently looking for an affordable{" "}
+            <select
+              value={procedure}
+              onChange={(e) => setProcedure(e.target.value)}
+              style={selectStyle}
+              className={`${inputClass} w-44 pr-6`}
+              aria-label="Procedure Type"
+            >
+              {PROCEDURES.map((p) => (
+                <option key={p} className="bg-slate-900 text-white">
+                  {p}
+                </option>
               ))}
-            </div>
-          </div>
+            </select>{" "}
+            procedure. My current health insurance is through{" "}
+            <select
+              value={insurer}
+              onChange={(e) => setInsurer(e.target.value)}
+              style={selectStyle}
+              className={`${inputClass} w-36 pr-6`}
+              aria-label="Insurance Provider"
+            >
+              {INSURERS.map((i) => (
+                <option key={i} className="bg-slate-900 text-white">
+                  {i}
+                </option>
+              ))}
+            </select>{" "}
+            and my remaining deductible is ${" "}
+            <input
+              type="number"
+              min={0}
+              value={deductible}
+              onChange={(e) => setDeductible(Number(e.target.value) || 0)}
+              className={`${inputClass} w-24`}
+              aria-label="Remaining Deductible"
+            />
+            .
+          </p>
+        </div>
 
+        {/* CTA */}
+        <div className="px-6 pb-6">
           <button
             onClick={onCalculate}
             disabled={calculating}
-            className="w-full h-11 rounded-xl bg-emerald-600 text-white font-semibold text-sm flex items-center justify-center gap-2 hover:bg-emerald-700 transition-colors shadow-md disabled:opacity-70"
+            className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-base flex items-center justify-center gap-2.5 hover:bg-emerald-400 transition-colors shadow-[0_0_30px_rgba(16,185,129,0.45)] disabled:opacity-70 disabled:shadow-none"
           >
-            <Sparkles className="w-4 h-4" />
-            {calculating ? "Analyzing intake…" : "Calculate Bundled Costs"}
+            <ScanSearch className="w-5 h-5" />
+            {calculating ? "Scanning global options…" : "Scan Global Options & Calculate Costs"}
           </button>
         </div>
       </div>
