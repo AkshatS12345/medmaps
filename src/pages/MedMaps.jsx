@@ -375,7 +375,7 @@ export default function MedMaps() {
                 className="absolute top-0 left-[48%] h-full w-[52%]"
                 style={{
                   background:
-                    "radial-gradient(circle at 50% 50%, rgba(13,148,136,0.14), transparent 65%)",
+                    "radial-gradient(circle at 50% 48%, rgba(30,64,90,0.35), transparent 70%)",
                 }}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
