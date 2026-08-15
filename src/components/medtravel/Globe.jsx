@@ -155,7 +155,10 @@ export default function Globe({ markers = [], legend = [], picks = [], onPick })
         ref={canvasRef}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
-        onPointerUp={endDrag}
+        onPointerUp={(e) => {
+          if (!movedRef.current) onPick?.(null);
+          endDrag(e);
+        }}
         onPointerLeave={endDrag}
         className="w-full h-full touch-none select-none"
         style={{
@@ -164,6 +167,30 @@ export default function Globe({ markers = [], legend = [], picks = [], onPick })
           cursor: dragging ? "grabbing" : "grab",
         }}
       />
+      {/* Clickable destination pins, positioned over the canvas. */}
+      {overlay.map((p) => (
+        <button
+          key={p.key}
+          type="button"
+          title={`${p.label} · ${p.sublabel}`}
+          onClick={() => onPick?.(p.option)}
+          className="absolute z-10 -translate-x-1/2 -translate-y-1/2 group"
+          style={{ left: p.pos.x, top: p.pos.y }}
+        >
+          <span
+            className={`block rounded-full ring-2 transition-transform group-hover:scale-150 ${
+              p.dim
+                ? "w-2 h-2 bg-slate-400/60 ring-slate-300/30"
+                : "w-3 h-3 bg-emerald-400 ring-emerald-200/50"
+            }`}
+          />
+          <span className="pointer-events-none absolute left-1/2 top-full -translate-x-1/2 mt-1.5 whitespace-nowrap rounded-md bg-slate-900/95 border border-white/15 px-2 py-1 text-[10px] text-white opacity-0 group-hover:opacity-100 transition-opacity">
+            {p.label}
+            <span className="text-slate-400"> · {p.sublabel}</span>
+          </span>
+        </button>
+      ))}
+
       {legend.length > 0 && (
         <div className="absolute top-4 left-4 right-4 pointer-events-none">
           <p className="text-[10px] uppercase tracking-wide text-slate-500 mb-1.5">
