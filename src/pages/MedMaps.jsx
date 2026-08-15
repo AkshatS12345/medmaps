@@ -193,11 +193,14 @@ export default function MedMaps() {
       console.log("[MedMaps] POST /intake", { sessionId, text });
       const intakeRes = await api.intake(sessionId, text);
       console.log("[MedMaps] /intake done", intakeRes);
-      setIntake(intakeRes);
+      // The dropdown is an explicit choice and must beat whatever the text
+      // parser inferred from the sentence.
+      const procedure = form.procedure || intakeRes.procedure_name;
+      setIntake({ ...intakeRes, procedure_name: procedure });
 
       console.log("[MedMaps] POST /quote/domestic");
       const dom = await api.quoteDomestic(sessionId, {
-        procedure_name: intakeRes.procedure_name,
+        procedure_name: procedure,
         user_deductible: form.deductible ?? intakeRes.user_deductible,
         // The explicit selector wins over whatever the text parser inferred.
         coverage: form.coverage || intakeRes.coverage || "uninsured",
@@ -213,7 +216,7 @@ export default function MedMaps() {
       // /explain runs InvokeLLM (slow). Fire it only after results are on
       // screen, in its own try/catch, so it can never gate the table.
       setExplainLoading(true);
-      runExplain(sessionId, intakeRes.procedure_name)
+      runExplain(sessionId, procedure)
         .then((prose) => {
           console.log("[MedMaps] /explain done");
           setExplainProse(prose);
@@ -225,10 +228,7 @@ export default function MedMaps() {
       setCompareLoading(true);
       try {
         console.log("[MedMaps] POST /quote/international");
-        const intl = await api.quoteInternational(
-          sessionId,
-          intakeRes.procedure_name
-        );
+        const intl = await api.quoteInternational(sessionId, procedure);
         console.log("[MedMaps] /quote/international done", intl);
         setInternational(intl);
       } catch (e) {
