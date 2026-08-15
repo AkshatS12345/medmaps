@@ -155,10 +155,10 @@ export default function MedMaps() {
     }
   };
 
-  const handleCheckout = async (option) => {
+  const handleCheckout = async (option, hotelName) => {
     const hospitalId = option.hospital_id || option.id || option.name;
     try {
-      const res = await api.checkout(sessionId, hospitalId);
+      const res = await api.checkout(sessionId, hospitalId, hotelName);
       setCheckout(res);
     } catch {
       /* API never returns errors per spec */
@@ -189,6 +189,24 @@ export default function MedMaps() {
         hospital_id: option.hospital_id,
       },
     });
+
+    // A chosen recovery hotel is a separate real line item, not part of the procedure.
+    if (option.hotel) {
+      addItem({
+        category: "hotel",
+        itemName: option.hotel.name,
+        description: `${option.hotel.nights} nights, ${option.hotel.distance_miles} mi from ${option.name}`,
+        provider: option.hotel.name,
+        location,
+        unitPrice: Number(option.hotel.total) || 0,
+        quantity: 1,
+        metadata: {
+          nightly_rate: option.hotel.nightly_rate,
+          distance_miles: option.hotel.distance_miles,
+          source: "OpenStreetMap",
+        },
+      });
+    }
   };
 
   return (
