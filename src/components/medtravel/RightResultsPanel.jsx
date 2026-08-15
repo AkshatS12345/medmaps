@@ -93,7 +93,7 @@ export default function RightResultsPanel({
         >
           <DomesticResults
             data={domestic}
-            onCheckout={onCheckout}
+            onCheckout={onSelect}
             onAddToCart={onAddToCart}
           />
           <ExplanationPanel prose={explainProse} loading={explainLoading} />
@@ -112,7 +112,7 @@ export default function RightResultsPanel({
             <InternationalResults
               data={international}
               onAddToCart={onAddToCart}
-              onCheckout={onCheckout}
+              onCheckout={(o) => onSelect(o)}
             />
           )}
         </TabsContent>
