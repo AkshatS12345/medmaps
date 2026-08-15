@@ -1,21 +1,29 @@
 import React, { useEffect, useState } from "react";
-import { ArrowLeft, Check, Plane, BedDouble, ShieldCheck, Hospital } from "lucide-react";
+import {
+  ArrowLeft,
+  Check,
+  Plane,
+  BedDouble,
+  ShieldCheck,
+  Hospital,
+} from "lucide-react";
 import { money, percent } from "@/lib/format";
 import { api } from "@/lib/api";
 
 const ALL_STEPS = [
   { key: "hospital", label: "Facility", icon: Hospital },
-  { key: "travel", label: "Travel & stay", icon: Plane },
+  { key: "flight", label: "Flight", icon: Plane },
+  { key: "hotel", label: "Hotel", icon: BedDouble },
   { key: "coverage", label: "Coverage", icon: ShieldCheck },
 ];
 
-function StepBar({ current, steps, onJump }) {
-  const STEPS = steps;
+function StepBar({ steps, current, onJump }) {
+  const idx = steps.findIndex((s) => s.key === current);
   return (
-    <div className="flex items-center gap-1.5">
-      {STEPS.map((s, i) => {
-        const done = STEPS.findIndex((x) => x.key === current) > i;
-        const active = s.key === current;
+    <div className="flex items-center gap-1">
+      {steps.map((s, i) => {
+        const done = i < idx;
+        const active = i === idx;
         const Icon = s.icon;
         return (
           <React.Fragment key={s.key}>
@@ -33,8 +41,8 @@ function StepBar({ current, steps, onJump }) {
               {done ? <Check className="w-3 h-3" /> : <Icon className="w-3 h-3" />}
               {s.label}
             </button>
-            {i < STEPS.length - 1 && (
-              <span className="h-px w-3 bg-white/15 flex-shrink-0" />
+            {i < steps.length - 1 && (
+              <span className="h-px w-2.5 bg-white/15 flex-shrink-0" />
             )}
           </React.Fragment>
         );
@@ -43,74 +51,117 @@ function StepBar({ current, steps, onJump }) {
   );
 }
 
-function Line({ label, sub, amount, muted }) {
+function Line({ label, sub, amount, pending }) {
   return (
     <div className="flex items-start justify-between gap-3 rounded-lg bg-slate-800/50 border border-white/10 px-3 py-2">
       <div className="min-w-0">
-        <p className={`text-sm ${muted ? "text-slate-400" : "text-white"} truncate`}>
+        <p className={`text-sm truncate ${pending ? "text-slate-500" : "text-white"}`}>
           {label}
         </p>
         {sub && <p className="text-[10px] text-slate-500">{sub}</p>}
       </div>
-      <span className="text-sm font-semibold text-white flex-shrink-0">
+      <span
+        className={`text-sm font-semibold flex-shrink-0 ${
+          pending ? "text-slate-500" : "text-white"
+        }`}
+      >
         {money(amount)}
       </span>
     </div>
   );
 }
 
-export default function TripBuilder({ option, intake, onBack, onBook, onAddToCart }) {
+function Choice({ selected, onClick, title, meta, price, note }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full text-left rounded-xl px-3 py-2.5 border transition-colors ${
+        selected
+          ? "bg-teal-500/15 border-teal-400/50"
+          : "bg-slate-800/40 border-white/10 hover:border-white/30"
+      }`}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm text-white truncate">{title}</p>
+          <p className="text-[11px] text-slate-400">{meta}</p>
+        </div>
+        <div className="text-right flex-shrink-0">
+          <p className="text-sm font-semibold text-white">{money(price)}</p>
+          {note && <p className="text-[10px] text-teal-300">{note}</p>}
+        </div>
+      </div>
+    </button>
+  );
+}
+
+export default function TripBuilder({ option, onBack, onBook, onAddToCart }) {
+  const isIntl = !!option.country;
+  const steps = ALL_STEPS.filter(
+    (s) => isIntl || (s.key !== "flight" && s.key !== "hotel")
+  );
+
   const [step, setStep] = useState("hospital");
+  const [flights, setFlights] = useState(null);
+  const [flight, setFlight] = useState(null);
   const [hotels, setHotels] = useState(null);
   const [hotel, setHotel] = useState(null);
 
-  const isIntl = !!option.country;
-
   useEffect(() => {
     if (!isIntl || !option.hospital_id) return;
-    let cancelled = false;
+    let dead = false;
+    api
+      .flights(option.hospital_id)
+      .then((r) => !dead && setFlights(r?.options || []))
+      .catch(() => !dead && setFlights([]));
     api
       .hotels(option.hospital_id)
-      .then((r) => !cancelled && setHotels(r?.hotels || []))
-      .catch(() => !cancelled && setHotels([]));
+      .then((r) => !dead && setHotels(r?.hotels || []))
+      .catch(() => !dead && setHotels([]));
     return () => {
-      cancelled = true;
+      dead = true;
     };
   }, [isIntl, option.hospital_id]);
 
-  // Swapping the bundled lodging for a specific hotel changes the total.
-  const bundledLodging = Number(option.lodging_cost) || 0;
-  const lodging = hotel ? Number(hotel.total) : bundledLodging;
+  // Chosen legs replace the bundled estimates in the running total.
+  const flightCost = flight ? Number(flight.price) : Number(option.flight_cost) || 0;
+  const lodgingCost = hotel ? Number(hotel.total) : Number(option.lodging_cost) || 0;
   const total = isIntl
     ? Number(option.base_cost) +
-      Number(option.flight_cost || 0) +
-      lodging +
-      Number(option.warranty_cost || 0)
+      flightCost +
+      lodgingCost +
+      (Number(option.warranty_cost) || 0)
     : Number(option.expected_cost);
 
-  // Domestic care has no flight and no recovery hotel, so that step is skipped.
-  const order = isIntl ? ["hospital", "travel", "coverage"] : ["hospital", "coverage"];
-  const next = () =>
-    setStep((s) => order[Math.min(order.indexOf(s) + 1, order.length - 1)]);
+  const goNext = () => {
+    const i = steps.findIndex((s) => s.key === step);
+    setStep(steps[Math.min(i + 1, steps.length - 1)].key);
+  };
+
+  const NextButton = ({ label }) => (
+    <button
+      onClick={goNext}
+      className="w-full h-11 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold text-sm transition-colors"
+    >
+      {label}
+    </button>
+  );
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <button
           onClick={onBack}
           className="inline-flex items-center gap-1.5 text-xs text-slate-300 hover:text-white transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          All options
+          All hospitals
         </button>
-        <StepBar
-          current={step}
-          steps={ALL_STEPS.filter((s) => (isIntl ? true : s.key !== "travel"))}
-          onJump={setStep}
-        />
+        <StepBar steps={steps} current={step} onJump={setStep} />
       </div>
 
-      {/* Always-visible running package */}
+      {/* Running package — always visible, updates as each leg is chosen. */}
       <div className="rounded-2xl border border-teal-400/30 bg-teal-500/5 p-3 space-y-2">
         <p className="text-[10px] uppercase tracking-wide text-teal-200/80">
           Your package
@@ -119,7 +170,7 @@ export default function TripBuilder({ option, intake, onBack, onBook, onAddToCar
           label={option.name}
           sub={
             isIntl
-              ? `${option.city}, ${option.country} · ${option.flight_hours}h flight`
+              ? `${option.city}, ${option.country}`
               : `${option.city ? option.city + ", " : ""}${option.state} · ${percent(
                   option.complication_rate
                 )} complication rate`
@@ -129,26 +180,31 @@ export default function TripBuilder({ option, intake, onBack, onBook, onAddToCar
         {isIntl && (
           <>
             <Line
-              label="Round-trip flight from JFK"
-              sub={option.travel_source?.flights}
-              amount={option.flight_cost}
-              muted={step === "hospital"}
+              label={flight ? `${flight.carrier} — ${flight.duration}` : "Flight not chosen"}
+              sub={
+                flight
+                  ? `${flight.origin}→${flight.destination}, ${
+                      flight.stops === 0 ? "non-stop" : `${flight.stops} stop`
+                    }`
+                  : "bundled estimate"
+              }
+              amount={flightCost}
+              pending={!flight}
             />
             <Line
-              label={hotel ? hotel.name : "Recovery stay (bundled estimate)"}
+              label={hotel ? hotel.name : "Hotel not chosen"}
               sub={
                 hotel
                   ? `${hotel.nights} nights · ${hotel.distance_miles} mi from hospital`
-                  : "choose a specific hotel in the next step"
+                  : "bundled estimate"
               }
-              amount={lodging}
-              muted={step === "hospital"}
+              amount={lodgingCost}
+              pending={!hotel}
             />
             <Line
               label="180-day complication coverage"
               sub={`priced at ${percent(option.complication_rate)} complication risk`}
               amount={option.warranty_cost}
-              muted={step !== "coverage"}
             />
           </>
         )}
@@ -160,7 +216,7 @@ export default function TripBuilder({ option, intake, onBack, onBook, onAddToCar
         </div>
       </div>
 
-      {/* Step body */}
+      {/* STEP 1 — facility */}
       {step === "hospital" && (
         <div className="space-y-3">
           {option.reasoning && (
@@ -168,78 +224,77 @@ export default function TripBuilder({ option, intake, onBack, onBook, onAddToCar
               {option.reasoning}
             </p>
           )}
-          {!isIntl && option.source_url && (
-            <p className="text-[10px] text-slate-500">
-              Price and complication rate from CMS.
-            </p>
-          )}
-          <button
-            onClick={next}
-            className="w-full h-11 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold text-sm transition-colors"
-          >
-            {isIntl ? "Continue to travel & stay" : "Continue to coverage"}
-          </button>
+          <NextButton
+            label={isIntl ? "Continue — choose your flight" : "Continue — coverage"}
+          />
         </div>
       )}
 
-      {step === "travel" && (
+      {/* STEP 2 — flight */}
+      {step === "flight" && (
         <div className="space-y-3">
-          {!isIntl && (
-            <p className="text-sm text-slate-400">
-              No travel needed — this facility is domestic.
-            </p>
+          <p className="text-xs text-slate-400">
+            Round trip from JFK to {option.city}. Carriers and distance are real;
+            fares are modelled from distance and schedules are not live.
+          </p>
+          {flights === null && (
+            <p className="text-xs text-slate-500">Loading flights…</p>
           )}
-          {isIntl && (
-            <>
-              <p className="text-xs text-slate-400">
-                Recovery hotels nearest {option.name}. Names and distances from
-                OpenStreetMap; nightly rate is the destination average.
-              </p>
-              {hotels === null && (
-                <p className="text-xs text-slate-500">Loading hotels…</p>
-              )}
-              {hotels && hotels.length === 0 && (
-                <p className="text-xs text-slate-500">
-                  No mapped hotels near this hospital — lodging stays bundled.
-                </p>
-              )}
-              <div className="space-y-1.5">
-                {(hotels || []).map((h) => {
-                  const sel = hotel?.name === h.name;
-                  return (
-                    <button
-                      key={h.name}
-                      onClick={() => setHotel(sel ? null : h)}
-                      className={`w-full text-left rounded-lg px-3 py-2 border transition-colors ${
-                        sel
-                          ? "bg-teal-500/15 border-teal-400/40"
-                          : "bg-slate-800/40 border-white/10 hover:border-white/25"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm text-white truncate flex items-center gap-1.5">
-                          <BedDouble className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-                          {h.name}
-                        </span>
-                        <span className="text-xs text-slate-300 flex-shrink-0">
-                          {h.distance_miles} mi · {money(h.total)}
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </>
-          )}
-          <button
-            onClick={next}
-            className="w-full h-11 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold text-sm transition-colors"
-          >
-            Continue to coverage
-          </button>
+          <div className="space-y-1.5">
+            {(flights || []).map((f) => (
+              <Choice
+                key={f.flight_id}
+                selected={flight?.flight_id === f.flight_id}
+                onClick={() => setFlight(f)}
+                title={f.carrier}
+                meta={`${f.stops === 0 ? "Non-stop" : `${f.stops} stop`} · ${f.duration} · ${Number(
+                  f.distance_miles
+                ).toLocaleString()} mi`}
+                price={f.price}
+                note={f.tier === "cheapest" ? "Lowest fare" : f.tier === "fastest" ? "Fastest" : null}
+              />
+            ))}
+          </div>
+          <NextButton
+            label={flight ? "Continue — choose your hotel" : "Skip — use bundled estimate"}
+          />
         </div>
       )}
 
+      {/* STEP 3 — hotel */}
+      {step === "hotel" && (
+        <div className="space-y-3">
+          <p className="text-xs text-slate-400">
+            Recovery hotels nearest {option.name}. Names and distances from
+            OpenStreetMap; nightly rate is the destination average.
+          </p>
+          {hotels === null && <p className="text-xs text-slate-500">Loading hotels…</p>}
+          {hotels && hotels.length === 0 && (
+            <p className="text-xs text-slate-500">
+              No mapped hotels near this hospital — lodging stays bundled.
+            </p>
+          )}
+          <div className="space-y-1.5">
+            {(hotels || []).map((h) => (
+              <Choice
+                key={h.name}
+                selected={hotel?.name === h.name}
+                onClick={() => setHotel(h)}
+                title={h.name}
+                meta={`${h.distance_miles} mi from hospital · ${h.nights} nights · ${money(
+                  h.nightly_rate
+                )}/night`}
+                price={h.total}
+              />
+            ))}
+          </div>
+          <NextButton
+            label={hotel ? "Continue — review coverage" : "Skip — use bundled estimate"}
+          />
+        </div>
+      )}
+
+      {/* STEP 4 — coverage + book */}
       {step === "coverage" && (
         <div className="space-y-3">
           {isIntl && option.distribution ? (
@@ -250,17 +305,13 @@ export default function TripBuilder({ option, intake, onBack, onBook, onAddToCar
               </p>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div className="rounded-lg bg-red-500/10 border border-red-400/25 p-2">
-                  <p className="text-[10px] text-red-200/80">
-                    Worst case uncovered
-                  </p>
+                  <p className="text-[10px] text-red-200/80">Worst case uncovered</p>
                   <p className="text-base font-bold text-red-300">
                     {money(option.distribution.p99_uncovered)}
                   </p>
                 </div>
                 <div className="rounded-lg bg-emerald-500/10 border border-emerald-400/25 p-2">
-                  <p className="text-[10px] text-emerald-200/80">
-                    Worst case covered
-                  </p>
+                  <p className="text-[10px] text-emerald-200/80">Worst case covered</p>
                   <p className="text-base font-bold text-emerald-300">
                     {money(option.distribution.p99)}
                   </p>
@@ -286,12 +337,12 @@ export default function TripBuilder({ option, intake, onBack, onBook, onAddToCar
           )}
           <button
             onClick={() => {
-              onAddToCart?.({ ...option, hotel });
-              onBook(option, hotel?.name);
+              onAddToCart?.({ ...option, flight, hotel });
+              onBook(option, hotel?.name, flight?.flight_id);
             }}
             className="w-full h-11 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold text-sm transition-colors"
           >
-            Review & book — {money(total)}
+            Review &amp; book — {money(total)}
           </button>
         </div>
       )}
