@@ -94,8 +94,9 @@ export default function MedMaps() {
       console.log("[MedMaps] POST /quote/domestic");
       const dom = await api.quoteDomestic(sessionId, {
         procedure_name: intakeRes.procedure_name,
-        user_deductible: intakeRes.user_deductible,
-        coverage: intakeRes.coverage,
+        user_deductible: form.deductible ?? intakeRes.user_deductible,
+        // The explicit selector wins over whatever the text parser inferred.
+        coverage: form.coverage || intakeRes.coverage || "uninsured",
         state: intakeRes.state,
         plan_id: form.plan_id,
       });
