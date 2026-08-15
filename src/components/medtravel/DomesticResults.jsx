@@ -35,76 +35,97 @@ function RankInversion({ ri }) {
   );
 }
 
+// Cards, not a table: seven columns never fit the results panel and pushed the
+// action buttons off-screen. Rank is explicit so the expected-cost ordering reads.
+function OptionRow({ o, rank, onCheckout, onAddToCart }) {
+  const savesVsSticker = Number(o.base_cost) - Number(o.expected_cost);
+  return (
+    <div className="rounded-xl bg-slate-800/40 border border-white/10 p-3 hover:border-white/20 transition-colors">
+      <div className="flex items-start gap-2.5">
+        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-slate-700 text-slate-300 text-xs font-semibold flex items-center justify-center mt-0.5">
+          {rank}
+        </span>
+        <div className="min-w-0 flex-1">
+          <h4 className="text-sm font-semibold text-white leading-snug">
+            {o.name}
+          </h4>
+          <p className="text-[11px] text-slate-400">
+            {o.city ? `${o.city}, ` : ""}
+            {o.state}
+          </p>
+        </div>
+        <div className="text-right flex-shrink-0">
+          <p className="text-[10px] uppercase tracking-wide text-slate-500">
+            Expected total
+          </p>
+          <p className="font-heading text-lg font-bold text-white leading-tight">
+            {money(o.expected_cost)}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-2.5 grid grid-cols-3 gap-2 text-[11px]">
+        <div>
+          <p className="text-slate-500">Sticker</p>
+          <p className="text-slate-300">{money(o.base_cost)}</p>
+        </div>
+        <div>
+          <p className="text-slate-500">Your cost</p>
+          <p className="text-slate-200">{money(o.out_of_pocket)}</p>
+        </div>
+        <div>
+          <p className="text-slate-500">Complication rate</p>
+          <p className="text-slate-200">
+            {percent(o.complication_rate)}
+            {o.complication_ci && (
+              <span className="text-slate-500">
+                {" "}
+                {percentRange(o.complication_ci)}
+              </span>
+            )}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-3 flex gap-2">
+        <button
+          type="button"
+          onClick={(e) => {
+            flyToCart(e.currentTarget);
+            onAddToCart?.(o);
+          }}
+          className="flex-1 h-8 text-xs rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-semibold transition-colors"
+        >
+          Add to Cart
+        </button>
+        <button
+          type="button"
+          onClick={() => onCheckout(o)}
+          className="flex-1 h-8 text-xs rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white font-semibold transition-colors"
+        >
+          Book
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function OptionsTable({ options, onCheckout, onAddToCart }) {
   // Options arrive sorted by expected cost. Do not re-sort.
   return (
-    <div className="rounded-2xl bg-slate-800/40 border border-white/10 overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-[10px] uppercase tracking-wide text-slate-400 border-b border-white/10">
-              <th className="px-3 py-2 font-medium">Hospital</th>
-              <th className="px-3 py-2 font-medium">State</th>
-              <th className="px-3 py-2 font-medium text-right">Sticker price</th>
-              <th className="px-3 py-2 font-medium text-right">Your cost</th>
-              <th className="px-3 py-2 font-medium text-right">Complication rate</th>
-              <th className="px-3 py-2 font-medium text-right">Expected total</th>
-              <th className="px-3 py-2"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {options.map((o, i) => (
-              <tr
-                key={i}
-                className="border-b border-white/5 last:border-0 hover:bg-white/5"
-              >
-                <td className="px-3 py-2.5 text-white font-medium">{o.name}</td>
-                <td className="px-3 py-2.5 text-slate-300">{o.state}</td>
-                <td className="px-3 py-2.5 text-right text-slate-300">
-                  {money(o.base_cost)}
-                </td>
-                <td className="px-3 py-2.5 text-right text-slate-200">
-                  {money(o.out_of_pocket)}
-                </td>
-                <td className="px-3 py-2.5 text-right">
-                  <div className="text-slate-200">{percent(o.complication_rate)}</div>
-                  {o.complication_ci && (
-                    <div className="text-[10px] text-slate-500">
-                      {percentRange(o.complication_ci)}
-                    </div>
-                  )}
-                </td>
-                <td className="px-3 py-2.5 text-right">
-                  <span className="font-heading text-base font-bold text-white">
-                    {money(o.expected_cost)}
-                  </span>
-                </td>
-                <td className="px-3 py-2.5 text-right">
-                  <div className="flex items-center justify-end gap-1.5">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        flyToCart(e.currentTarget);
-                        onAddToCart?.(o);
-                      }}
-                      className="text-xs rounded-lg bg-slate-700 hover:bg-slate-600 text-white px-2.5 py-1 font-semibold transition-colors"
-                    >
-                      Add to Cart
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onCheckout(o)}
-                      className="text-xs rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white px-2.5 py-1 font-semibold transition-colors"
-                    >
-                      Book
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+    <div className="space-y-2.5">
+      <p className="text-[10px] uppercase tracking-wide text-slate-500">
+        {options.length} hospitals · ranked by expected total
+      </p>
+      {options.map((o, i) => (
+        <OptionRow
+          key={o.hospital_id || i}
+          o={o}
+          rank={i + 1}
+          onCheckout={onCheckout}
+          onAddToCart={onAddToCart}
+        />
+      ))}
     </div>
   );
 }
