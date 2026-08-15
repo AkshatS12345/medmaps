@@ -56,6 +56,7 @@ export default function LeftIntakePanel({ onCalculate, calculating }) {
   const [plans, setPlans] = useState([]);
   const [planId, setPlanId] = useState("");
   const [planQuery, setPlanQuery] = useState("");
+  const [coverage, setCoverage] = useState("uninsured");
 
   // Populate procedure dropdown from the API.
   useEffect(() => {
@@ -137,6 +138,9 @@ export default function LeftIntakePanel({ onCalculate, calculating }) {
       departureDate,
       returnDate,
       deductible,
+      // "marketplace" is a UI mode, not a backend coverage bucket — a chosen plan
+      // supplies its own real deductible and out-of-pocket max.
+      coverage: coverage === "marketplace" ? "standard" : coverage,
       plan_id: planId || undefined,
       planLabel: planLabel(selectedPlan),
     });
@@ -235,25 +239,51 @@ export default function LeftIntakePanel({ onCalculate, calculating }) {
                 </motion.span>
               )}
             </AnimatePresence>{" "}
-            My insurance plan is{" "}
-            <input
-              type="text"
-              value={planQuery}
-              onChange={(e) => setPlanQuery(e.target.value)}
-              placeholder="search plans…"
-              className={`${inputClass} w-28`}
-              aria-label="Search insurance plans"
-            />{" "}
+            I am{" "}
             <select
-              value={planId}
-              onChange={(e) => setPlanId(e.target.value)}
+              value={coverage}
+              onChange={(e) => {
+                setCoverage(e.target.value);
+                if (e.target.value !== "marketplace") setPlanId("");
+              }}
               style={selectStyle}
-              className={`${inputClass} w-52 pr-6`}
-              aria-label="Insurance plan"
+              className={`${inputClass} w-56 pr-6`}
+              aria-label="Coverage type"
             >
-              <option value="" className="bg-slate-800 text-white">
-                Uninsured (default)
+              <option value="uninsured" className="bg-slate-800 text-white">
+                uninsured
               </option>
+              <option value="high_deductible" className="bg-slate-800 text-white">
+                on a high-deductible plan
+              </option>
+              <option value="standard" className="bg-slate-800 text-white">
+                on a standard employer plan
+              </option>
+              <option value="marketplace" className="bg-slate-800 text-white">
+                on a marketplace plan…
+              </option>
+            </select>
+            {coverage === "marketplace" && (
+              <>
+                {" "}
+                <input
+                  type="text"
+                  value={planQuery}
+                  onChange={(e) => setPlanQuery(e.target.value)}
+                  placeholder="search plans…"
+                  className={`${inputClass} w-28`}
+                  aria-label="Search insurance plans"
+                />{" "}
+                <select
+                  value={planId}
+                  onChange={(e) => setPlanId(e.target.value)}
+                  style={selectStyle}
+                  className={`${inputClass} w-52 pr-6`}
+                  aria-label="Insurance plan"
+                >
+                  <option value="" className="bg-slate-800 text-white">
+                    {plans.length ? "choose a plan" : "type 2+ letters to search"}
+                  </option>
               {plans.map((p) => {
                 const id = p.plan_id || p.id;
                 return (
@@ -266,7 +296,9 @@ export default function LeftIntakePanel({ onCalculate, calculating }) {
                   </option>
                 );
               })}
-            </select>{" "}
+                </select>
+              </>
+            )}{" "}
             with a remaining deductible of ${" "}
             <input
               type="number"
