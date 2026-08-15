@@ -4,9 +4,7 @@ import Header from "@/components/medtravel/Header";
 import Globe from "@/components/medtravel/Globe";
 import LeftIntakePanel from "@/components/medtravel/LeftIntakePanel";
 import RightResultsPanel from "@/components/medtravel/RightResultsPanel";
-import CartFab from "@/components/medtravel/CartFab";
-import CartFlyLayer from "@/components/medtravel/CartFlyLayer";
-import CartDrawer from "@/components/medtravel/CartDrawer";
+
 import CheckoutModal from "@/components/medtravel/CheckoutModal";
 import { useCart } from "@/context/CartContext";
 import { api, generateSessionId } from "@/lib/api";
@@ -419,10 +417,6 @@ export default function MedMaps() {
         </div>
       </div>
 
-      {/* Floating shopping cart — fixed bottom-left, opens the cart drawer */}
-      <CartFab count={count} onClick={openCart} />
-      <CartDrawer />
-      <CartFlyLayer />
 
       <CheckoutModal data={checkout} onClose={() => setCheckout(null)} />
     </div>
