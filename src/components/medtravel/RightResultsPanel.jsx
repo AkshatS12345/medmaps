@@ -71,7 +71,7 @@ export default function RightResultsPanel({
         onValueChange={onTabChange}
         className="flex-1 flex flex-col min-h-0"
       >
-        <div className="px-5 pt-3 pb-3 border-b border-white/10 flex-shrink-0">
+        <div className="px-5 pt-3 pb-3 border-b border-white/10 flex-shrink-0 max-w-2xl mx-auto w-full">
           <TabsList className="bg-slate-800/60 border border-white/10">
             <TabsTrigger
               value="domestic"
@@ -90,20 +90,23 @@ export default function RightResultsPanel({
 
         <TabsContent
           value="domestic"
-          className="flex-1 overflow-y-auto px-5 py-4 space-y-4 mt-0 data-[state=inactive]:hidden"
+          className="flex-1 overflow-y-auto px-5 py-4 mt-0 data-[state=inactive]:hidden"
         >
+          <div className="max-w-2xl mx-auto space-y-4">
           <DomesticResults
             data={domestic}
             onCheckout={onSelect}
             onAddToCart={onAddToCart}
           />
           <ExplanationPanel prose={explainProse} loading={explainLoading} />
+          </div>
         </TabsContent>
 
         <TabsContent
           value="international"
-          className="flex-1 overflow-y-auto px-5 py-4 space-y-4 mt-0 data-[state=inactive]:hidden"
+          className="flex-1 overflow-y-auto px-5 py-4 mt-0 data-[state=inactive]:hidden"
         >
+          <div className="max-w-2xl mx-auto space-y-4">
           {compareLoading && !international ? (
             <div className="flex items-center justify-center gap-2 text-slate-400 py-12">
               <Loader2 className="w-5 h-5 animate-spin" />
@@ -116,6 +119,7 @@ export default function RightResultsPanel({
               onCheckout={(o) => onSelect(o)}
             />
           )}
+          </div>
         </TabsContent>
       </Tabs>
       )}
