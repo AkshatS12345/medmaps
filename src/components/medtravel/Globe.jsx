@@ -42,14 +42,16 @@ export default function Globe({ markers = [], legend = [], picks = [], onPick })
     return () => cancelAnimationFrame(raf);
   }, []);
 
+  // Size the canvas to a square as large as the container's longer edge so the
+  // sphere fills the panel instead of shrinking to its shorter side.
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(() =>
-      setBox(Math.min(el.clientWidth, el.clientHeight))
-    );
+    const measure = () =>
+      setBox(Math.round(Math.max(el.clientWidth, el.clientHeight) * 1.02));
+    const ro = new ResizeObserver(measure);
     ro.observe(el);
-    setBox(Math.min(el.clientWidth, el.clientHeight));
+    measure();
     return () => ro.disconnect();
   }, []);
 
@@ -151,22 +153,24 @@ export default function Globe({ markers = [], legend = [], picks = [], onPick })
 
   return (
     <div ref={wrapRef} className="absolute inset-0">
-      <canvas
-        ref={canvasRef}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={(e) => {
-          if (!movedRef.current) onPick?.(null);
-          endDrag(e);
-        }}
-        onPointerLeave={endDrag}
-        className="w-full h-full touch-none select-none"
-        style={{
-          width: "100%",
-          height: "100%",
-          cursor: dragging ? "grabbing" : "grab",
-        }}
-      />
+      <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+        <canvas
+          ref={canvasRef}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={(e) => {
+            if (!movedRef.current) onPick?.(null);
+            endDrag(e);
+          }}
+          onPointerLeave={endDrag}
+          className="touch-none select-none"
+          style={{
+            width: box ? `${box}px` : "100%",
+            height: box ? `${box}px` : "100%",
+            cursor: dragging ? "grabbing" : "grab",
+          }}
+        />
+      </div>
       {/* Clickable destination pins, positioned over the canvas. */}
       {overlay.map((p) => (
         <button
