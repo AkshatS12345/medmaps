@@ -38,6 +38,7 @@ export default function LeftIntakePanel({ onCalculate, calculating }) {
   const [procedure, setProcedure] = useState(PROCEDURES[0]);
   const [insurer, setInsurer] = useState(INSURERS[0]);
   const [deductible, setDeductible] = useState(5000);
+  const [location, setLocation] = useState("Costa Rica");
 
   return (
     <div className="w-full max-w-md mx-auto">
@@ -115,6 +116,14 @@ export default function LeftIntakePanel({ onCalculate, calculating }) {
               onChange={(e) => setDeductible(Number(e.target.value) || 0)}
               className={`${inputClass} w-20`}
               aria-label="Remaining Deductible"
+            />
+            . I would prefer to have the surgery in{" "}
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className={`${inputClass} w-32`}
+              aria-label="Preferred Location"
             />
             .
           </p>
