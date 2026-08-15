@@ -1,0 +1,34 @@
+{
+  "name": "Hospitals",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Name"
+    },
+    "procedure_name": {
+      "type": "string",
+      "title": "Procedure Name"
+    },
+    "base_cost": {
+      "type": "number",
+      "title": "Base Cost"
+    },
+    "safety_score": {
+      "type": "number",
+      "title": "Safety Score"
+    },
+    "location_type": {
+      "type": "string",
+      "title": "Location Type",
+      "default": "domestic"
+    }
+  },
+  "required": [
+    "name",
+    "procedure_name",
+    "base_cost",
+    "safety_score",
+    "location_type"
+  ]
+}
