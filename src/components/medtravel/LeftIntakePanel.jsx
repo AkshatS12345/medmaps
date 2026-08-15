@@ -57,6 +57,7 @@ export default function LeftIntakePanel({ onCalculate, calculating }) {
   const [planId, setPlanId] = useState("");
   const [planQuery, setPlanQuery] = useState("");
   const [coverage, setCoverage] = useState("uninsured");
+  const [planNote, setPlanNote] = useState("");
 
   // Populate procedure dropdown from the API.
   useEffect(() => {
@@ -89,10 +90,12 @@ export default function LeftIntakePanel({ onCalculate, calculating }) {
   // Populate insurance plans for the parsed state + search query (debounced).
   // The /plans endpoint requires a non-empty query to return matches.
   useEffect(() => {
+    if (coverage !== "marketplace") return;
     const st = parseState(location);
     const q = planQuery.trim();
     if (q.length < 2) {
       setPlans([]);
+      setPlanNote("");
       return;
     }
     let cancelled = false;
@@ -102,6 +105,7 @@ export default function LeftIntakePanel({ onCalculate, calculating }) {
         .then((res) => {
           if (cancelled) return;
           setPlans(Array.isArray(res) ? res : res?.plans || []);
+          setPlanNote(res?.note || "");
         })
         .catch(() => {});
     }, 400);
@@ -109,7 +113,7 @@ export default function LeftIntakePanel({ onCalculate, calculating }) {
       cancelled = true;
       clearTimeout(t);
     };
-  }, [planQuery, location]);
+  }, [planQuery, location, coverage]);
 
   const recoveryDays = RECOVERY_DAYS[procedure] ?? null;
 
@@ -297,6 +301,20 @@ export default function LeftIntakePanel({ onCalculate, calculating }) {
                 );
               })}
                 </select>
+                {selectedPlan && (
+                  <span className="block w-full mt-2 text-xs text-emerald-300/90 bg-emerald-500/10 border border-emerald-400/25 rounded-lg px-2.5 py-1.5">
+                    {selectedPlan.issuer} — deductible $
+                    {Number(selectedPlan.deductible).toLocaleString()}, out-of-pocket
+                    max ${Number(selectedPlan.oop_max).toLocaleString()},{" "}
+                    {Math.round((selectedPlan.coinsurance || 0) * 100)}% coinsurance.
+                    Real plan data, CMS PY2026.
+                  </span>
+                )}
+                {planNote && (
+                  <span className="block w-full mt-2 text-xs text-slate-400">
+                    {planNote}
+                  </span>
+                )}
               </>
             )}{" "}
             with a remaining deductible of ${" "}
