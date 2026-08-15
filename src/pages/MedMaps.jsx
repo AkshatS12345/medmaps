@@ -10,13 +10,43 @@ import { useCart } from "@/context/CartContext";
 import { api, generateSessionId } from "@/lib/api";
 import { base44 } from "@/api/base44Client";
 
-// Decorative globe markers (the globe is a visual; real options come from the API).
-const GLOBE_MARKERS = [
-  { location: [13.0827, 80.2707], size: 0.06 },
-  { location: [28.4595, 77.0266], size: 0.06 },
-  { location: [31.2304, 121.4737], size: 0.06 },
-  { location: [40.7128, -74.006], size: 0.06 },
-];
+// Before a search runs the globe shows nothing but the JFK origin.
+const JFK_MARKER = { location: [40.6413, -73.7781], size: 0.05 };
+
+// Real destinations from /quote/international, sized by how much each saves.
+// Options excluded by the traveller's own constraints are drawn smaller.
+function globeMarkers(international) {
+  const opts = international?.options || [];
+  const withCoords = opts.filter(
+    (o) => typeof o.lat === "number" && typeof o.lon === "number"
+  );
+  if (!withCoords.length) return [JFK_MARKER];
+
+  const best = Math.max(
+    ...withCoords.map((o) => Number(o.savings_vs_domestic) || 0),
+    1
+  );
+
+  // One marker per country — several hospitals can share a destination.
+  const seen = new Map();
+  for (const o of withCoords) {
+    const prev = seen.get(o.country);
+    if (!prev || (o.savings_vs_domestic || 0) > (prev.savings_vs_domestic || 0)) {
+      seen.set(o.country, o);
+    }
+  }
+
+  return [
+    JFK_MARKER,
+    ...[...seen.values()].map((o) => {
+      const ratio = Math.max(0, (Number(o.savings_vs_domestic) || 0) / best);
+      return {
+        location: [o.lat, o.lon],
+        size: o.excluded_by_constraint ? 0.03 : 0.04 + ratio * 0.06,
+      };
+    }),
+  ];
+}
 
 const EASE = [0.22, 1, 0.36, 1];
 const DURATION = 0.7;
@@ -258,7 +288,7 @@ export default function MedMaps() {
             animate={{ x: status === "results" ? "-100%" : "0%" }}
             transition={{ duration: DURATION, ease: EASE }}
           >
-            <Globe markers={GLOBE_MARKERS} />
+            <Globe markers={globeMarkers(international)} />
           </motion.div>
 
           {/* Results panel — right half, slides in from the right */}
