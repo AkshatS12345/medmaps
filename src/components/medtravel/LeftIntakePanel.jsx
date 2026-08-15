@@ -178,7 +178,18 @@ export default function LeftIntakePanel({ onCalculate, calculating }) {
         {/* CTA */}
         <div className="px-6 pb-6">
           <button
-            onClick={onCalculate}
+            onClick={() =>
+              onCalculate({
+                name,
+                location,
+                age,
+                procedure,
+                departureDate,
+                returnDate,
+                plan,
+                deductible,
+              })
+            }
             disabled={calculating}
             className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-base flex items-center justify-center gap-2.5 hover:bg-emerald-400 transition-colors shadow-[0_0_30px_rgba(16,185,129,0.45)] disabled:opacity-70 disabled:shadow-none"
           >

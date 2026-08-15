@@ -1,8 +1,27 @@
-import React from "react";
-import { ShieldCheck, Plane, ArrowRight, MapPin } from "lucide-react";
+import React, { useState } from "react";
+import { ShieldCheck, Plane, MapPin, Check, ShoppingCart } from "lucide-react";
+import { calculateLogistics } from "@/lib/logistics";
 
-export default function FacilityCard({ facility }) {
+export default function FacilityCard({ facility, intake, onAddToCart }) {
   const isDomestic = facility.type === "domestic";
+  const [added, setAdded] = useState(false);
+
+  const logistics =
+    !isDomestic && intake
+      ? calculateLogistics(
+          intake.location,
+          facility.location,
+          intake.procedure,
+          { departure: intake.departureDate, return: intake.returnDate }
+        )
+      : null;
+
+  const handleClick = (e) => {
+    if (added) return;
+    setAdded(true);
+    onAddToCart?.(e);
+    window.setTimeout(() => setAdded(false), 1200);
+  };
 
   return (
     <div className="rounded-2xl bg-slate-800/50 backdrop-blur-md border border-white/10 p-4 hover:border-blue-400/40 transition-colors">
@@ -13,9 +32,11 @@ export default function FacilityCard({ facility }) {
           </div>
           <div className="min-w-0">
             <h3 className="font-heading text-sm font-semibold text-white leading-snug">
-              {facility.label}
+              {facility.name}
             </h3>
-            <p className="text-xs text-slate-400 mt-0.5 truncate">{facility.name}</p>
+            <p className="text-xs text-slate-400 mt-0.5 truncate">
+              {facility.location}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-1 border border-emerald-400/30 flex-shrink-0">
@@ -34,21 +55,34 @@ export default function FacilityCard({ facility }) {
           </span>
         ) : (
           <span>
-            Estimated Flight & Lodging:{" "}
-            <span className="font-medium text-white">Included</span>
+            Estimated Flight &amp; Lodging:{" "}
+            <span className="font-medium text-white">{logistics}</span>
           </span>
         )}
       </div>
 
       <button
+        type="button"
+        onClick={handleClick}
         className={`mt-3 w-full h-9 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors ${
-          isDomestic
+          added
+            ? "bg-emerald-600 text-white"
+            : isDomestic
             ? "bg-slate-700 hover:bg-slate-600 text-white"
             : "bg-emerald-500 hover:bg-emerald-400 text-white"
         }`}
       >
-        {isDomestic ? "View Domestic Quote" : "View Bundled Quote"}
-        <ArrowRight className="w-3.5 h-3.5" />
+        {added ? (
+          <>
+            <Check className="w-3.5 h-3.5" />
+            Added!
+          </>
+        ) : (
+          <>
+            <ShoppingCart className="w-3.5 h-3.5" />
+            Add to Cart
+          </>
+        )}
       </button>
     </div>
   );

@@ -4,7 +4,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import FacilityCard from "./FacilityCard";
 import FlightPathTab from "./FlightPathTab";
 
-export default function RightResultsPanel({ facilities, onBack }) {
+export default function RightResultsPanel({ facilities, intake, onAddToCart, onBack }) {
   return (
     <div className="h-full w-full flex flex-col bg-slate-900/70 backdrop-blur-xl border-l border-white/10">
       {/* Header */}
@@ -57,7 +57,12 @@ export default function RightResultsPanel({ facilities, onBack }) {
           className="flex-1 overflow-y-auto px-5 py-4 space-y-3 mt-0 data-[state=inactive]:hidden"
         >
           {facilities.map((f) => (
-            <FacilityCard key={f.id} facility={f} />
+            <FacilityCard
+              key={f.id}
+              facility={f}
+              intake={intake}
+              onAddToCart={onAddToCart}
+            />
           ))}
         </TabsContent>
 

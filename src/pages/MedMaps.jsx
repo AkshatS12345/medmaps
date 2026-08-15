@@ -1,51 +1,44 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Header from "@/components/medtravel/Header";
 import Globe from "@/components/medtravel/Globe";
 import LeftIntakePanel from "@/components/medtravel/LeftIntakePanel";
 import RightResultsPanel from "@/components/medtravel/RightResultsPanel";
+import CartFab from "@/components/medtravel/CartFab";
+import FlyingItem from "@/components/medtravel/FlyingItem";
 
 const FACILITIES = [
   {
-    id: "india1",
-    label: "India 1",
-    name: "Apollo Health City, Chennai",
+    id: "apollo",
+    name: "Apollo Health City",
+    location: "Chennai, India",
     country: "India",
     safety: 9.4,
     coords: [13.0827, 80.2707],
     type: "bundled",
   },
   {
-    id: "india2",
-    label: "India 2",
-    name: "Fortis Memorial Research Institute, Gurgaon",
+    id: "fortis",
+    name: "Fortis Memorial Research Institute",
+    location: "Gurgaon, India",
     country: "India",
     safety: 9.1,
     coords: [28.4595, 77.0266],
     type: "bundled",
   },
   {
-    id: "china1",
-    label: "China 1",
+    id: "shanghai",
     name: "Shanghai United Family Hospital",
+    location: "Shanghai, China",
     country: "China",
     safety: 9.2,
     coords: [31.2304, 121.4737],
     type: "bundled",
   },
   {
-    id: "china2",
-    label: "China 2",
-    name: "Peking Union Medical College Hospital",
-    country: "China",
-    safety: 8.8,
-    coords: [39.9138, 116.3914],
-    type: "bundled",
-  },
-  {
-    id: "us1",
-    label: "US 1",
-    name: "Apex Orthopedic Institute, New York",
+    id: "apex",
+    name: "Apex Orthopedic Institute",
+    location: "New York, NY",
     country: "United States",
     safety: 9.5,
     coords: [40.7128, -74.006],
@@ -59,16 +52,44 @@ const DURATION = 0.7;
 export default function MedMaps() {
   const [calculating, setCalculating] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [intake, setIntake] = useState(null);
+  const [cartCount, setCartCount] = useState(0);
+  const [flyingItems, setFlyingItems] = useState([]);
+  const cartRef = useRef(null);
 
-  const handleCalculate = () => {
+  const handleCalculate = (data) => {
+    setIntake(data);
     setCalculating(true);
-    setTimeout(() => {
+    window.setTimeout(() => {
       setCalculating(false);
       setShowResults(true);
     }, 1200);
   };
 
   const handleBack = () => setShowResults(false);
+
+  const handleAddToCart = (event) => {
+    const startRect = event.currentTarget.getBoundingClientRect();
+    const cartEl = cartRef.current;
+    if (!startRect || !cartEl) return;
+    const endRect = cartEl.getBoundingClientRect();
+    const id = Date.now() + Math.random();
+    setFlyingItems((items) => [
+      ...items,
+      {
+        id,
+        startX: startRect.left + startRect.width / 2,
+        startY: startRect.top + startRect.height / 2,
+        endX: endRect.left + endRect.width / 2,
+        endY: endRect.top + endRect.height / 2,
+      },
+    ]);
+  };
+
+  const handleFlyComplete = (id) => {
+    setFlyingItems((items) => items.filter((i) => i.id !== id));
+    setCartCount((c) => c + 1);
+  };
 
   const markers = FACILITIES.map((f) => ({ location: f.coords, size: 0.06 }));
 
@@ -120,12 +141,32 @@ export default function MedMaps() {
                 exit={{ x: "100%" }}
                 transition={{ duration: DURATION, ease: EASE }}
               >
-                <RightResultsPanel facilities={FACILITIES} onBack={handleBack} />
+                <RightResultsPanel
+                  facilities={FACILITIES}
+                  intake={intake}
+                  onAddToCart={handleAddToCart}
+                  onBack={handleBack}
+                />
               </motion.div>
             )}
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Floating shopping cart — fixed bottom-left */}
+      <CartFab ref={cartRef} count={cartCount} />
+
+      {/* Fly-to-cart animations */}
+      {flyingItems.map((item) => (
+        <FlyingItem
+          key={item.id}
+          startX={item.startX}
+          startY={item.startY}
+          endX={item.endX}
+          endY={item.endY}
+          onComplete={() => handleFlyComplete(item.id)}
+        />
+      ))}
     </div>
   );
 }
