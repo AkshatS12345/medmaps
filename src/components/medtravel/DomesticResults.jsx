@@ -103,12 +103,24 @@ function OptionRow({ o, rank, onSelect }) {
 }
 
 function OptionsList({ options, onSelect }) {
+  // CMS publishes a per-hospital complication rate for hip and knee only. For
+  // everything else every hospital carries the same national rate, so ranking
+  // by expected cost reduces to ranking by price — say so rather than imply
+  // a differentiation that is not in the data.
+  const perHospitalRisk = options.some((o) => o.complication_ci);
   // Options arrive sorted by expected cost. Do not re-sort.
   return (
     <div className="space-y-2.5">
       <p className="text-[10px] uppercase tracking-wide text-slate-500">
         {options.length} hospitals · ranked by expected total
       </p>
+      {!perHospitalRisk && (
+        <p className="text-[11px] text-slate-400 bg-slate-800/40 border border-white/10 rounded-lg px-3 py-2">
+          CMS publishes a per-hospital complication rate for hip and knee
+          replacement only. Every hospital below carries the same national rate
+          for this procedure, so this ranking reflects price alone.
+        </p>
+      )}
       {options.map((o, i) => (
         <OptionRow
           key={o.hospital_id || i}
