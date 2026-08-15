@@ -96,8 +96,11 @@ function Choice({ selected, onClick, title, meta, price, note }) {
   );
 }
 
-export default function TripBuilder({ option, onBack, onBook, onAddToCart }) {
+export default function TripBuilder({ option, intake, onBack, onBook, onAddToCart }) {
   const isIntl = !!option.country;
+  // A hospital in the patient's own state means no flight and no hotel at all.
+  const homeState = intake?.state || null;
+  const sameState = !isIntl && homeState && option.state === homeState;
   const steps = ALL_STEPS.filter(
     (s) => isIntl || (s.key !== "flight" && s.key !== "hotel")
   );
@@ -177,6 +180,33 @@ export default function TripBuilder({ option, onBack, onBook, onAddToCart }) {
           }
           amount={option.base_cost}
         />
+        {!isIntl && (
+          <>
+            <Line
+              label="Flight"
+              sub={
+                sameState
+                  ? `Care in ${option.state}, your home state — none required`
+                  : "Domestic care — no air travel modelled"
+              }
+              amount={0}
+            />
+            <Line
+              label="Recovery stay"
+              sub={
+                sameState
+                  ? "Recover at home — no lodging cost"
+                  : "Domestic care — no lodging modelled"
+              }
+              amount={0}
+            />
+            <Line
+              label="Complication coverage"
+              sub="Covered by your existing US plan"
+              amount={0}
+            />
+          </>
+        )}
         {isIntl && (
           <>
             <Line
@@ -222,6 +252,13 @@ export default function TripBuilder({ option, onBack, onBook, onAddToCart }) {
           {option.reasoning && (
             <p className="text-sm text-slate-200 bg-slate-800/40 rounded-lg p-3 border border-white/5">
               {option.reasoning}
+            </p>
+          )}
+          {!isIntl && (
+            <p className="text-sm text-emerald-200/90 bg-emerald-500/10 rounded-lg p-3 border border-emerald-400/25">
+              {sameState
+                ? `${option.city ? option.city + ", " : ""}${option.state} is in your home state — no flight, no hotel, no complication policy. The only cost is the procedure itself.`
+                : `Domestic care — no international flight or recovery stay. The only cost is the procedure itself.`}
             </p>
           )}
           <NextButton
