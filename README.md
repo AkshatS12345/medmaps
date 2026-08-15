@@ -10,7 +10,7 @@ MedMaps ranks every US hospital by what the surgery will *actually* cost you —
 |---|---|
 | **Live API** | https://medmap-api-kn44.onrender.com |
 | **Interactive API docs** | https://medmap-api-kn44.onrender.com/docs |
-| **Backend source** | https://github.com/LohitJaga/MedMap |
+| **Backend source** | [`backend/`](backend) in this repo |
 | **Frontend** | this repo — React, built on Base44 |
 
 Built at the NYC Hackathon, August 2026 · E-commerce track.
@@ -106,14 +106,33 @@ POST /checkout                escrow split
 
 ---
 
-## Run the frontend
+## Run it
+
+**Backend**
+
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Open `http://localhost:8000/docs` — the entire flow is drivable from Swagger. Datasets are committed, so nothing needs re-pulling. To refresh them:
+
+```bash
+python fetch_cms.py        # hospital prices + complication rates
+python fetch_more_drgs.py  # additional procedures
+python fetch_plans.py      # ACA marketplace plans
+python fetch_hotels.py     # hotels near each hospital
+```
+
+**Frontend**
 
 ```bash
 npm install
 npm run dev
 ```
 
-The app points at the hosted API by default. Backend setup is in the [backend repo](https://github.com/LohitJaga/MedMap).
+The app points at the hosted API by default. Backend setup is below.
 
 ---
 
@@ -126,13 +145,3 @@ Two real bugs it caught during the build:
 - The Monte Carlo's lognormal draw had mean 1.163×, so simulated losses ran 16% above what the premium was priced against. Fixed with `mu = -σ²/2`.
 
 ---
-
-## What's real and what isn't
-
-Stated plainly, because getting caught is worse than admitting it.
-
-**Real** — US hospital prices and payments (CMS), per-hospital complication rates with published confidence intervals (CMS), ACA plan terms (CMS), hotel names/locations/distances (OpenStreetMap), great-circle distances, the expected-cost model, the actuarial pricing, the Monte Carlo.
-
-**Modelled, and labelled as such in every response** — international procedure prices where none is published (scaled from that hospital's own knee pricing by the real domestic cost ratio); flight fares (`$150 + $0.115/mile`, real carriers on the route, not live seat availability); hotel nightly rates (destination average adjusted by brand tier — OpenStreetMap carries no pricing).
-
-**Known limits** — CMS publishes per-hospital complication rates for **hip and knee only**; the other six procedures carry the national rate and the UI says so on screen. healthcare.gov covers 30 states, so NY and CA plans aren't in the marketplace data. The complication underwriter is a placeholder — the pricing math is real, the counterparty isn't, and a production version needs a licensed carrier and state-by-state approval.
