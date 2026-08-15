@@ -42,13 +42,16 @@ export default function Globe({ markers = [], legend = [], picks = [], onPick })
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  // Size the canvas to a square as large as the container's longer edge so the
-  // sphere fills the panel instead of shrinking to its shorter side.
+  // Square canvas sized generously off the shorter edge. Sizing off the longer
+  // edge overflows and slices the sphere flat at top and bottom.
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
-    const measure = () =>
-      setBox(Math.round(Math.max(el.clientWidth, el.clientHeight) * 1.02));
+    const measure = () => {
+      const w = el.clientWidth;
+      const h = el.clientHeight;
+      setBox(Math.round(Math.min(Math.min(w, h) * 1.25, h * 0.98, w)));
+    };
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     measure();
