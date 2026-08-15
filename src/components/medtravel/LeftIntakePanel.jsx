@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, ScanSearch, Loader2 } from "lucide-react";
+import { api } from "@/lib/api";
 
-const PROCEDURES = ["Knee Replacement", "Hip Replacement", "Lasik"];
+const DEFAULT_PROCEDURES = ["Knee Replacement", "Hip Replacement", "Lasik"];
 
 // Recovery window (in days) before it's clinically safe to fly post-procedure.
+// Kept for the known procedures; unknown procedures default to 14 days.
 const RECOVERY_DAYS = {
   "Knee Replacement": 14,
   "Hip Replacement": 14,
@@ -31,34 +33,114 @@ const defaultDate = (() => {
   return d.toISOString().slice(0, 10);
 })();
 
+function parseState(loc) {
+  const parts = (loc || "").split(",");
+  const last = parts[parts.length - 1].trim();
+  return last.length === 2 ? last.toUpperCase() : "";
+}
+
+function planLabel(p) {
+  if (!p) return "";
+  return [p.issuer, p.name, p.metal && `(${p.metal})`].filter(Boolean).join(" ");
+}
+
 export default function LeftIntakePanel({ onCalculate, calculating }) {
   const [name, setName] = useState("David");
   const [location, setLocation] = useState("New York, NY");
   const [age, setAge] = useState(54);
-  const [procedure, setProcedure] = useState(PROCEDURES[0]);
+  const [procedure, setProcedure] = useState("");
+  const [procedures, setProcedures] = useState(DEFAULT_PROCEDURES);
   const [departureDate, setDepartureDate] = useState(defaultDate);
   const [returnDate, setReturnDate] = useState("");
-  const [plan, setPlan] = useState("");
   const [deductible, setDeductible] = useState(5000);
+  const [plans, setPlans] = useState([]);
+  const [planId, setPlanId] = useState("");
+  const [planQuery, setPlanQuery] = useState("");
 
-  const recoveryDays = RECOVERY_DAYS[procedure] ?? 7;
+  // Populate procedure dropdown from the API.
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .procedures()
+      .then((res) => {
+        if (cancelled) return;
+        const arr = Array.isArray(res) ? res : res?.procedures || [];
+        const list = arr
+          .map((p) =>
+            typeof p === "string"
+              ? p
+              : p.procedure_name || p.name || p.label || p.procedure
+          )
+          .filter(Boolean);
+        if (list.length) {
+          setProcedures(list);
+          setProcedure((prev) => prev || list[0]);
+        } else {
+          setProcedure((prev) => prev || DEFAULT_PROCEDURES[0]);
+        }
+      })
+      .catch(() => setProcedure((prev) => prev || DEFAULT_PROCEDURES[0]));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-  // Auto-set the Return Date to Departure + recovery window whenever the
-  // procedure or departure date changes. The user can still override it.
+  // Populate insurance plans for the parsed state + search query (debounced).
+  // The /plans endpoint requires a non-empty query to return matches.
+  useEffect(() => {
+    const st = parseState(location);
+    const q = planQuery.trim();
+    if (q.length < 2) {
+      setPlans([]);
+      return;
+    }
+    let cancelled = false;
+    const t = setTimeout(() => {
+      api
+        .plans(st, q)
+        .then((res) => {
+          if (cancelled) return;
+          setPlans(Array.isArray(res) ? res : res?.plans || []);
+        })
+        .catch(() => {});
+    }, 400);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [planQuery, location]);
+
+  const recoveryDays = RECOVERY_DAYS[procedure] ?? null;
+
   useEffect(() => {
     if (!departureDate) return;
     const d = new Date(departureDate + "T00:00:00");
-    d.setDate(d.getDate() + recoveryDays);
+    d.setDate(d.getDate() + (recoveryDays ?? 14));
     setReturnDate(d.toISOString().slice(0, 10));
   }, [procedure, departureDate, recoveryDays]);
 
-  // Warn if the chosen return date falls inside the recommended recovery window.
   const isEarlyReturn = (() => {
-    if (!departureDate || !returnDate) return false;
+    if (!departureDate || !returnDate || !recoveryDays) return false;
     const dep = new Date(departureDate + "T00:00:00").getTime();
     const ret = new Date(returnDate + "T00:00:00").getTime();
     return ret - dep < recoveryDays * 86400000;
   })();
+
+  const selectedPlan = plans.find((p) => (p.plan_id || p.id) === planId) || null;
+
+  const submit = () => {
+    onCalculate({
+      name,
+      location,
+      age,
+      procedure,
+      departureDate,
+      returnDate,
+      deductible,
+      plan_id: planId || undefined,
+      planLabel: planLabel(selectedPlan),
+    });
+  };
 
   return (
     <div className="w-full max-w-md">
@@ -113,11 +195,11 @@ export default function LeftIntakePanel({ onCalculate, calculating }) {
               value={procedure}
               onChange={(e) => setProcedure(e.target.value)}
               style={selectStyle}
-              className={`${inputClass} w-36 pr-6`}
+              className={`${inputClass} w-40 pr-6`}
               aria-label="Procedure Type"
             >
-              {PROCEDURES.map((p) => (
-                <option key={p} className="bg-slate-800 text-white">
+              {procedures.map((p) => (
+                <option key={p} value={p} className="bg-slate-800 text-white">
                   {p}
                 </option>
               ))}
@@ -153,15 +235,38 @@ export default function LeftIntakePanel({ onCalculate, calculating }) {
                 </motion.span>
               )}
             </AnimatePresence>{" "}
-            My insurance coverage is under{" "}
+            My insurance plan is{" "}
             <input
               type="text"
-              value={plan}
-              onChange={(e) => setPlan(e.target.value)}
-              placeholder="e.g., Blue Cross Blue Shield PPO Gold"
-              className={`${inputClass} w-44 placeholder:text-slate-500`}
-              aria-label="Provider & Plan Name"
+              value={planQuery}
+              onChange={(e) => setPlanQuery(e.target.value)}
+              placeholder="search plans…"
+              className={`${inputClass} w-28`}
+              aria-label="Search insurance plans"
             />{" "}
+            <select
+              value={planId}
+              onChange={(e) => setPlanId(e.target.value)}
+              style={selectStyle}
+              className={`${inputClass} w-52 pr-6`}
+              aria-label="Insurance plan"
+            >
+              <option value="" className="bg-slate-800 text-white">
+                Uninsured (default)
+              </option>
+              {plans.map((p) => {
+                const id = p.plan_id || p.id;
+                return (
+                  <option
+                    key={id}
+                    value={id}
+                    className="bg-slate-800 text-white"
+                  >
+                    {planLabel(p)}
+                  </option>
+                );
+              })}
+            </select>{" "}
             with a remaining deductible of ${" "}
             <input
               type="number"
@@ -178,19 +283,8 @@ export default function LeftIntakePanel({ onCalculate, calculating }) {
         {/* CTA */}
         <div className="px-6 pb-6">
           <button
-            onClick={() =>
-              onCalculate({
-                name,
-                location,
-                age,
-                procedure,
-                departureDate,
-                returnDate,
-                plan,
-                deductible,
-              })
-            }
-            disabled={calculating}
+            onClick={submit}
+            disabled={calculating || !procedure}
             className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-base flex items-center justify-center gap-2.5 hover:bg-emerald-400 transition-colors shadow-[0_0_30px_rgba(16,185,129,0.45)] disabled:opacity-70 disabled:shadow-none"
           >
             {calculating ? (

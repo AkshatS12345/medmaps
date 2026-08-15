@@ -1,10 +1,24 @@
 import React from "react";
-import { ArrowLeft, BadgeCheck } from "lucide-react";
+import { ArrowLeft, Loader2, Globe2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import FacilityCard from "./FacilityCard";
-import FlightPathTab from "./FlightPathTab";
+import FactsChips from "./FactsChips";
+import DomesticResults from "./DomesticResults";
+import InternationalResults from "./InternationalResults";
+import ExplanationPanel from "./ExplanationPanel";
 
-export default function RightResultsPanel({ facilities, intake, onAddToCart, onBack }) {
+export default function RightResultsPanel({
+  intake,
+  domestic,
+  international,
+  explainProse,
+  explainLoading,
+  compareLoading,
+  activeTab,
+  onTabChange,
+  onCompareInternational,
+  onCheckout,
+  onBack,
+}) {
   return (
     <div className="h-full w-full flex flex-col bg-slate-900/70 backdrop-blur-xl border-l border-white/10">
       {/* Header */}
@@ -19,58 +33,80 @@ export default function RightResultsPanel({ facilities, intake, onAddToCart, onB
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="font-heading text-lg font-semibold text-white leading-tight">
-              Recommended Accredited Centers
+              {intake?.procedure_name || "Your results"}
             </h2>
-            <p className="text-xs text-slate-400 mt-1 max-w-[300px]">
-              Ranked by procedure safety, historical success rates, and bundled
-              logistics.
+            <p className="text-xs text-slate-400 mt-1 max-w-[320px]">
+              Ranked by true expected cost — not sticker price. All figures are
+              estimates.
             </p>
           </div>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs font-semibold text-emerald-200 border border-emerald-400/30 flex-shrink-0">
-            <BadgeCheck className="w-3.5 h-3.5" />
-            {facilities.length} Matches
-          </span>
         </div>
+        {intake?.facts && intake.facts.length > 0 && (
+          <div className="mt-3">
+            <p className="text-[10px] uppercase tracking-wide text-slate-500 mb-1.5">
+              Understood
+            </p>
+            <FactsChips facts={intake.facts} />
+          </div>
+        )}
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="centers" className="flex-1 flex flex-col min-h-0">
+      <Tabs
+        value={activeTab}
+        onValueChange={onTabChange}
+        className="flex-1 flex flex-col min-h-0"
+      >
         <div className="px-5 pt-3 pb-3 border-b border-white/10 flex-shrink-0">
           <TabsList className="bg-slate-800/60 border border-white/10">
             <TabsTrigger
-              value="centers"
+              value="domestic"
               className="text-slate-300 data-[state=active]:bg-slate-700 data-[state=active]:text-white"
             >
-              Accredited Centers
+              Domestic
             </TabsTrigger>
             <TabsTrigger
-              value="flights"
+              value="international"
               className="text-slate-300 data-[state=active]:bg-slate-700 data-[state=active]:text-white"
             >
-              Cheapest Flight Path
+              International
             </TabsTrigger>
           </TabsList>
         </div>
 
         <TabsContent
-          value="centers"
-          className="flex-1 overflow-y-auto px-5 py-4 space-y-3 mt-0 data-[state=inactive]:hidden"
+          value="domestic"
+          className="flex-1 overflow-y-auto px-5 py-4 space-y-4 mt-0 data-[state=inactive]:hidden"
         >
-          {facilities.map((f) => (
-            <FacilityCard
-              key={f.id}
-              facility={f}
-              intake={intake}
-              onAddToCart={onAddToCart}
-            />
-          ))}
+          <DomesticResults data={domestic} onCheckout={onCheckout} />
+          <ExplanationPanel prose={explainProse} loading={explainLoading} />
+          <button
+            type="button"
+            onClick={onCompareInternational}
+            disabled={compareLoading}
+            className="w-full h-10 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-70 text-white text-sm font-semibold flex items-center justify-center gap-2 transition-colors"
+          >
+            {compareLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Globe2 className="w-4 h-4" />
+            )}
+            Compare International Options
+          </button>
         </TabsContent>
 
         <TabsContent
-          value="flights"
-          className="flex-1 overflow-y-auto mt-0 data-[state=inactive]:hidden"
+          value="international"
+          className="flex-1 overflow-y-auto px-5 py-4 space-y-4 mt-0 data-[state=inactive]:hidden"
         >
-          <FlightPathTab />
+          {compareLoading && !international ? (
+            <div className="flex items-center justify-center gap-2 text-slate-400 py-12">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span className="text-sm">Loading international options…</span>
+            </div>
+          ) : (
+            <InternationalResults data={international} />
+          )}
         </TabsContent>
       </Tabs>
     </div>
