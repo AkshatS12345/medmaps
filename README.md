@@ -8,7 +8,7 @@ MedMaps ranks every US hospital by what the surgery will *actually* cost you —
 
 | | |
 |---|---|
-| **Live app** | https://preview-sandbox--6a808b74626d37ceff331ef7.base44.app?_preview_token=tdDVR-jIRR6X7CZqFFvAwSsUQqpWs1t48QYchy4XUbQ |
+| **Live app** | https://med-path-bridge.base44.app/ |
 | **Live API** | https://medmap-api-kn44.onrender.com |
 | **Interactive API docs** | https://medmap-api-kn44.onrender.com/docs |
 | **Backend source** | [`backend/`](backend) in this repo |
