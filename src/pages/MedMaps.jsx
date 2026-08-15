@@ -12,8 +12,40 @@ import { useCart } from "@/context/CartContext";
 import { api, generateSessionId } from "@/lib/api";
 import { base44 } from "@/api/base44Client";
 
-// Before a search runs the globe shows nothing but the JFK origin.
-const JFK_MARKER = { location: [40.6413, -73.7781], size: 0.05 };
+const JFK_MARKER = { location: [40.6413, -73.7781], size: 0.06 };
+
+// Every destination MedMaps covers, plus a few US anchors, so the globe reads
+// as a real network before a search has run.
+const WORLD_MARKERS = [
+  JFK_MARKER,
+  { location: [9.9939, -84.2088], size: 0.045 }, // Costa Rica
+  { location: [9.0714, -79.3835], size: 0.04 }, // Panama
+  { location: [18.4297, -69.6689], size: 0.04 }, // Dominican Republic
+  { location: [32.5411, -116.9702], size: 0.045 }, // Mexico
+  { location: [4.7016, -74.1469], size: 0.045 }, // Colombia
+  { location: [-23.4356, -46.4731], size: 0.045 }, // Brazil
+  { location: [40.4719, -3.5626], size: 0.045 }, // Spain
+  { location: [52.1657, 20.9671], size: 0.04 }, // Poland
+  { location: [50.1008, 14.26], size: 0.04 }, // Czech Republic
+  { location: [54.6341, 25.2858], size: 0.035 }, // Lithuania
+  { location: [41.2753, 28.7519], size: 0.05 }, // Turkey
+  { location: [31.7226, 35.9932], size: 0.035 }, // Jordan
+  { location: [25.2532, 55.3657], size: 0.045 }, // UAE
+  { location: [12.9941, 80.1709], size: 0.055 }, // India (Chennai)
+  { location: [28.4595, 77.0266], size: 0.04 }, // India (Delhi)
+  { location: [12.9716, 77.5946], size: 0.04 }, // India (Bengaluru)
+  { location: [13.69, 100.7501], size: 0.05 }, // Thailand
+  { location: [2.7456, 101.7099], size: 0.04 }, // Malaysia
+  { location: [1.3644, 103.9915], size: 0.045 }, // Singapore
+  { location: [37.4602, 126.4407], size: 0.045 }, // South Korea
+  { location: [25.0777, 121.2328], size: 0.04 }, // Taiwan
+  { location: [14.5086, 121.0194], size: 0.04 }, // Philippines
+  // US anchors — where patients start from.
+  { location: [34.0522, -118.2437], size: 0.035 }, // Los Angeles
+  { location: [41.8781, -87.6298], size: 0.035 }, // Chicago
+  { location: [29.7604, -95.3698], size: 0.035 }, // Houston
+  { location: [25.7617, -80.1918], size: 0.035 }, // Miami
+];
 
 // Real destinations from /quote/international, sized by how much each saves.
 // Options excluded by the traveller's own constraints are drawn smaller.
@@ -22,7 +54,7 @@ function globeMarkers(international) {
   const withCoords = opts.filter(
     (o) => typeof o.lat === "number" && typeof o.lon === "number"
   );
-  if (!withCoords.length) return [JFK_MARKER];
+  if (!withCoords.length) return WORLD_MARKERS;
 
   const best = Math.max(
     ...withCoords.map((o) => Number(o.savings_vs_domestic) || 0),
