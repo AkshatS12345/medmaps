@@ -5,6 +5,7 @@ import FactsChips from "./FactsChips";
 import DomesticResults from "./DomesticResults";
 import InternationalResults from "./InternationalResults";
 import ExplanationPanel from "./ExplanationPanel";
+import TripBuilder from "./TripBuilder";
 
 export default function RightResultsPanel({
   intake,
