@@ -11,29 +11,51 @@ export default function Globe() {
     if (!canvas) return;
 
     let phi = 0;
+    let globe = null;
+    let raf = 0;
+    let tries = 0;
 
-    const globe = createGlobe(canvas, {
-      devicePixelRatio: Math.min(window.devicePixelRatio, 2),
-      width: canvas.clientWidth,
-      height: canvas.clientHeight,
-      phi: 0,
-      theta: 0.3,
-      dark: 1,
-      diffuse: 1.4,
-      mapSamples: 20000,
-      mapBrightness: 6,
-      baseColor: [0.06, 0.12, 0.27], // deep blue oceans
-      markerColor: [0.16, 0.95, 0.7], // teal landmasses
-      glowColor: [0.06, 0.7, 0.6], // teal atmosphere glow
-      onRender: (state) => {
-        state.width = canvas.clientWidth;
-        state.height = canvas.clientHeight;
-        state.phi = phi;
-        phi += 0.0045;
-      },
-    });
+    const init = () => {
+      // Wait until the canvas has a real, non-zero size before creating the
+      // WebGL program — otherwise cobe's shader setup fails.
+      if ((canvas.clientWidth === 0 || canvas.clientHeight === 0) && tries < 30) {
+        tries++;
+        raf = requestAnimationFrame(init);
+        return;
+      }
 
-    return () => globe.destroy();
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+
+      globe = createGlobe(canvas, {
+        devicePixelRatio: Math.min(window.devicePixelRatio, 2),
+        width: w,
+        height: h,
+        phi: 0,
+        theta: 0.3,
+        dark: 1,
+        diffuse: 1.4,
+        mapSamples: 20000,
+        mapBrightness: 6,
+        baseColor: [0.06, 0.12, 0.27], // deep blue oceans
+        markerColor: [0.16, 0.95, 0.7], // teal landmasses
+        glowColor: [0.06, 0.7, 0.6], // teal atmosphere glow
+        markers: [],
+        onRender: (state) => {
+          state.width = canvas.clientWidth || w;
+          state.height = canvas.clientHeight || h;
+          state.phi = phi;
+          phi += 0.0045;
+        },
+      });
+    };
+
+    init();
+
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      if (globe) globe.destroy();
+    };
   }, []);
 
   return (
