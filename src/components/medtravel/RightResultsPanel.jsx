@@ -16,7 +16,6 @@ export default function RightResultsPanel({
   compareLoading,
   activeTab,
   onTabChange,
-  onAddToCart,
   onCheckout,
   onBack,
   selected,
@@ -62,7 +61,6 @@ export default function RightResultsPanel({
             intake={intake}
             onBack={() => onSelect(null)}
             onBook={onCheckout}
-            onAddToCart={onAddToCart}
           />
         </div>
       ) : (
