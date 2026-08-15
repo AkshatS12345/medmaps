@@ -163,10 +163,11 @@ function HotelPicker({ o, selected, onSelect }) {
   );
 }
 
-function Card({ o, onAddToCart, onCheckout }) {
+function Card({ o, onAddToCart }) {
   const excluded = o.excluded_by_constraint;
   const savings = Number(o.savings_vs_domestic) || 0;
   const [hotel, setHotel] = useState(null);
+  const [open, setOpen] = useState(false);
   return (
     <div
       className={`rounded-2xl border p-4 ${
@@ -191,15 +192,6 @@ function Card({ o, onAddToCart, onCheckout }) {
           </span>
         )}
       </div>
-
-      <div className="mt-3">
-        <StackedBar o={o} />
-      </div>
-      {o.travel_source && o.travel_source.flights && (
-        <p className="mt-1.5 text-[10px] text-slate-500">
-          {o.travel_source.flights}
-        </p>
-      )}
 
       <div className="mt-3 flex items-end justify-between gap-3">
         <div>
@@ -235,27 +227,40 @@ function Card({ o, onAddToCart, onCheckout }) {
         <HotelPicker o={o} selected={hotel} onSelect={setHotel} />
       )}
 
-      <div className="mt-3 flex gap-2">
+      <div className="mt-3">
         <button
           type="button"
-          onClick={(e) => {
-            flyToCart(e.currentTarget);
-            onAddToCart?.({ ...o, hotel });
-          }}
+          onClick={() => setOpen((v) => !v)}
           disabled={excluded}
-          className="flex-1 h-9 rounded-lg bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors"
+          className="w-full h-9 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors"
         >
-          Add to Cart
-        </button>
-        <button
-          type="button"
-          onClick={() => onCheckout?.(o, hotel?.name)}
-          disabled={excluded}
-          className="flex-1 h-9 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold flex items-center justify-center transition-colors"
-        >
-          Book
+          {open ? "Hide breakdown" : "Book"}
         </button>
       </div>
+
+      {open && !excluded && (
+        <div className="mt-3 pt-3 border-t border-white/10 space-y-3">
+          <p className="text-[10px] uppercase tracking-wide text-slate-500">
+            Price breakdown
+          </p>
+          <StackedBar o={o} />
+          {o.travel_source && o.travel_source.flights && (
+            <p className="text-[10px] text-slate-500">
+              {o.travel_source.flights}
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={(e) => {
+              flyToCart(e.currentTarget);
+              onAddToCart?.({ ...o, hotel });
+            }}
+            className="w-full h-9 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors"
+          >
+            Add to Cart
+          </button>
+        </div>
+      )}
     </div>
   );
 }
