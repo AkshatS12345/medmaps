@@ -96,7 +96,7 @@ function Choice({ selected, onClick, title, meta, price, note }) {
   );
 }
 
-export default function TripBuilder({ option, intake, onBack, onBook, onAddToCart }) {
+export default function TripBuilder({ option, intake, onBack, onBook }) {
   const isIntl = !!option.country;
   // A hospital in the patient's own state means no flight and no hotel at all.
   const homeState = intake?.state || null;
@@ -373,10 +373,7 @@ export default function TripBuilder({ option, intake, onBack, onBook, onAddToCar
             </p>
           )}
           <button
-            onClick={() => {
-              onAddToCart?.({ ...option, flight, hotel });
-              onBook(option, hotel?.name, flight?.flight_id);
-            }}
+            onClick={() => onBook(option, hotel?.name, flight?.flight_id)}
             className="w-full h-11 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold text-sm transition-colors"
           >
             Review &amp; book — {money(total)}
