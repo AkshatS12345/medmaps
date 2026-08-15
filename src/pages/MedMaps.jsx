@@ -372,10 +372,10 @@ export default function MedMaps() {
             {status !== "results" && (
               <motion.div
                 key="globe"
-                className="absolute top-0 left-[44%] h-full w-[62%]"
+                className="absolute top-0 left-[48%] h-full w-[52%]"
                 style={{
                   background:
-                    "radial-gradient(circle at 55% 50%, rgba(13,148,136,0.16), transparent 62%)",
+                    "radial-gradient(circle at 50% 50%, rgba(13,148,136,0.14), transparent 65%)",
                 }}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
