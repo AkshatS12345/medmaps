@@ -63,24 +63,29 @@ function OptionRow({ o, rank, onSelect }) {
         </div>
       </div>
 
-      <div className="mt-2.5 grid grid-cols-3 gap-2 text-[11px]">
+      <div className="mt-2.5 grid grid-cols-4 gap-2 text-[11px]">
         <div>
-          <p className="text-slate-500">Sticker</p>
+          <p className="text-slate-500">Billed</p>
+          <p className="text-slate-500 line-through">{money(o.billed_charge)}</p>
+        </div>
+        <div>
+          <p className="text-slate-500">Negotiated</p>
           <p className="text-slate-300">{money(o.base_cost)}</p>
         </div>
         <div>
-          <p className="text-slate-500">Your cost</p>
+          <p className="text-slate-500">You pay</p>
           <p className="text-slate-200">{money(o.out_of_pocket)}</p>
         </div>
         <div>
-          <p className="text-slate-500">Complication rate</p>
+          <p className="text-slate-500">Complication</p>
           <p className="text-slate-200">
             {percent(o.complication_rate)}
-            {o.complication_ci && (
-              <span className="text-slate-500">
-                {" "}
+            {o.complication_ci ? (
+              <span className="block text-slate-500">
                 {percentRange(o.complication_ci)}
               </span>
+            ) : (
+              <span className="block text-slate-600">national avg</span>
             )}
           </p>
         </div>
