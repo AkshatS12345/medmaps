@@ -130,6 +130,8 @@ export default function MedMaps() {
   const [activeTab, setActiveTab] = useState("domestic");
   const [checkout, setCheckout] = useState(null);
   const [error, setError] = useState(null);
+  // A facility chosen from a card, the globe, or a marker — drives TripBuilder.
+  const [selected, setSelected] = useState(null);
   const { count, openCart, addItem } = useCart();
 
   const handleSubmit = async (form) => {
@@ -138,6 +140,7 @@ export default function MedMaps() {
     setError(null);
     setDomestic(null);
     setInternational(null);
+    setSelected(null);
     setExplainProse("");
     try {
       const text = buildText(form);
@@ -335,6 +338,8 @@ export default function MedMaps() {
                   compareLoading={compareLoading}
                   activeTab={activeTab}
                   onTabChange={setActiveTab}
+                  selected={selected}
+                  onSelect={setSelected}
                   onAddToCart={handleAddToCart}
                   onCheckout={handleCheckout}
                   onBack={handleBack}
