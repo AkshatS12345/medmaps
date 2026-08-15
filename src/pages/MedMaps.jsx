@@ -69,6 +69,21 @@ function globeLegend(international) {
     .slice(0, 4);
 }
 
+// One clickable pin per hospital that has coordinates.
+function globePicks(international) {
+  return (international?.options || [])
+    .filter((o) => typeof o.lat === "number" && typeof o.lon === "number")
+    .map((o, i) => ({
+      key: `${o.hospital_id || i}`,
+      lat: o.lat,
+      lon: o.lon,
+      label: o.name,
+      sublabel: `${o.country} · $${Math.round(o.true_cost).toLocaleString()}`,
+      dim: !!o.excluded_by_constraint,
+      option: o,
+    }));
+}
+
 const EASE = [0.22, 1, 0.36, 1];
 const DURATION = 0.7;
 
@@ -314,7 +329,13 @@ export default function MedMaps() {
           >
             <Globe
               markers={globeMarkers(international)}
-              legend={globeLegend(international)}
+              legend={selected ? [] : globeLegend(international)}
+              picks={globePicks(international)}
+              onPick={(o) => {
+                if (!o) return;
+                setSelected(o);
+                setActiveTab("international");
+              }}
             />
           </motion.div>
 
