@@ -41,6 +41,12 @@ export const api = {
     postJson("/quote/international", { session_id, procedure_name }),
   explain: (session_id, procedure_name) =>
     postJson("/explain", { session_id, procedure_name }),
-  checkout: (session_id, hospital_id) =>
-    postJson("/checkout", { session_id, hospital_id }),
+  hotels: (hospital_id, nights) =>
+    getJson(
+      `/hotels?hospital_id=${encodeURIComponent(hospital_id)}${
+        nights ? `&nights=${nights}` : ""
+      }`
+    ),
+  checkout: (session_id, hospital_id, hotel_name) =>
+    postJson("/checkout", { session_id, hospital_id, hotel_name }),
 };
