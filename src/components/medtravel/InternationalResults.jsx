@@ -90,9 +90,81 @@ function RiskPanel({ o }) {
   );
 }
 
-function Card({ o, onAddToCart }) {
+// Real hotels near this specific hospital, from OpenStreetMap via the API.
+function HotelPicker({ o, selected, onSelect }) {
+  const [hotels, setHotels] = useState(null);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open || hotels || !o.hospital_id) return;
+    let cancelled = false;
+    api
+      .hotels(o.hospital_id)
+      .then((res) => !cancelled && setHotels(res?.hotels || []))
+      .catch(() => !cancelled && setHotels([]));
+    return () => {
+      cancelled = true;
+    };
+  }, [open, hotels, o.hospital_id]);
+
+  return (
+    <div className="mt-3 border-t border-white/10 pt-3">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="text-xs text-teal-300 hover:text-teal-200 transition-colors"
+      >
+        {open ? "Hide recovery hotels" : "Choose a recovery hotel near this hospital"}
+      </button>
+
+      {open && (
+        <div className="mt-2 space-y-1.5">
+          {hotels === null && (
+            <p className="text-[11px] text-slate-500">Loading hotels…</p>
+          )}
+          {hotels && hotels.length === 0 && (
+            <p className="text-[11px] text-slate-500">
+              No mapped hotels near this hospital — lodging stays bundled in travel.
+            </p>
+          )}
+          {hotels &&
+            hotels.map((h) => {
+              const isSel = selected?.name === h.name;
+              return (
+                <button
+                  key={h.name}
+                  type="button"
+                  onClick={() => onSelect(isSel ? null : h)}
+                  className={`w-full text-left rounded-lg px-2.5 py-1.5 border transition-colors ${
+                    isSel
+                      ? "bg-teal-500/15 border-teal-400/40"
+                      : "bg-slate-900/40 border-white/5 hover:border-white/20"
+                  }`}
+                >
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="text-xs text-white truncate">{h.name}</span>
+                    <span className="text-[11px] text-slate-400 flex-shrink-0">
+                      {h.distance_miles} mi · {money(h.total)}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          {hotels && hotels.length > 0 && (
+            <p className="text-[10px] text-slate-500 pt-0.5">
+              Names and distances from OpenStreetMap; nightly rate is the destination average.
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Card({ o, onAddToCart, onCheckout }) {
   const excluded = o.excluded_by_constraint;
   const savings = Number(o.savings_vs_domestic) || 0;
+  const [hotel, setHotel] = useState(null);
   return (
     <div
       className={`rounded-2xl border p-4 ${
@@ -157,19 +229,33 @@ function Card({ o, onAddToCart }) {
         </p>
       )}
 
-      <button
-        type="button"
-        onClick={() => onAddToCart?.(o)}
-        disabled={o.excluded_by_constraint}
-        className="mt-3 w-full h-9 rounded-lg bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors"
-      >
-        Add to Cart
-      </button>
+      {!excluded && (
+        <HotelPicker o={o} selected={hotel} onSelect={setHotel} />
+      )}
+
+      <div className="mt-3 flex gap-2">
+        <button
+          type="button"
+          onClick={() => onAddToCart?.({ ...o, hotel })}
+          disabled={excluded}
+          className="flex-1 h-9 rounded-lg bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors"
+        >
+          Add to Cart
+        </button>
+        <button
+          type="button"
+          onClick={() => onCheckout?.(o, hotel?.name)}
+          disabled={excluded}
+          className="flex-1 h-9 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold flex items-center justify-center transition-colors"
+        >
+          Book
+        </button>
+      </div>
     </div>
   );
 }
 
-export default function InternationalResults({ data, onAddToCart }) {
+export default function InternationalResults({ data, onAddToCart, onCheckout }) {
   if (!data) return null;
   const { options, degraded } = data;
   const list = Array.isArray(options) ? options : [];
@@ -181,7 +267,7 @@ export default function InternationalResults({ data, onAddToCart }) {
       {top && <RiskPanel o={top} />}
       <div className="space-y-3">
         {list.map((o, i) => (
-          <Card key={i} o={o} onAddToCart={onAddToCart} />
+          <Card key={i} o={o} onAddToCart={onAddToCart} onCheckout={onCheckout} />
         ))}
       </div>
     </div>
