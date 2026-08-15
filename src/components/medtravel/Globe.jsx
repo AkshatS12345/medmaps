@@ -73,19 +73,20 @@ export default function Globe({ markers = [], legend = [], picks = [], onPick })
     let tries = 0;
 
     const init = () => {
-      if ((canvas.clientWidth === 0 || canvas.clientHeight === 0) && tries < 30) {
+      // cobe must be created and rendered at ONE size. Feeding it clientWidth/
+      // clientHeight that differ from the creation size distorts the sphere and
+      // shifts its centre, so everything is driven off the measured `box`.
+      if (!box && tries < 30) {
         tries++;
         raf = requestAnimationFrame(init);
         return;
       }
-
-      const w = canvas.clientWidth;
-      const h = canvas.clientHeight;
+      const size = box || canvas.clientWidth || 400;
 
       globe = createGlobe(canvas, {
         devicePixelRatio: Math.min(window.devicePixelRatio, 2),
-        width: w,
-        height: h,
+        width: size,
+        height: size,
         phi: phiRef.current,
         theta: thetaRef.current,
         dark: 1,
@@ -99,8 +100,8 @@ export default function Globe({ markers = [], legend = [], picks = [], onPick })
         glowColor: [0.11, 0.22, 0.32],
         markers,
         onRender: (state) => {
-          state.width = canvas.clientWidth || w;
-          state.height = canvas.clientHeight || h;
+          state.width = size;
+          state.height = size;
           if (autoRef.current) phiRef.current += 0.0045;
           state.phi = phiRef.current;
           state.theta = thetaRef.current;
@@ -114,7 +115,7 @@ export default function Globe({ markers = [], legend = [], picks = [], onPick })
       if (raf) cancelAnimationFrame(raf);
       if (globe) globe.destroy();
     };
-  }, [markerKey]);
+  }, [markerKey, box]);
 
   const onPointerDown = (e) => {
     pointerStart.current = { x: e.clientX, y: e.clientY, phi: phiRef.current, theta: thetaRef.current };
