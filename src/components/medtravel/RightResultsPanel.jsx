@@ -93,11 +93,7 @@ export default function RightResultsPanel({
           className="flex-1 overflow-y-auto px-5 py-4 mt-0 data-[state=inactive]:hidden"
         >
           <div className="max-w-2xl mx-auto space-y-4">
-          <DomesticResults
-            data={domestic}
-            onCheckout={onSelect}
-            onAddToCart={onAddToCart}
-          />
+          <DomesticResults data={domestic} onSelect={onSelect} />
           <ExplanationPanel prose={explainProse} loading={explainLoading} />
           </div>
         </TabsContent>
@@ -113,11 +109,7 @@ export default function RightResultsPanel({
               <span className="text-sm">Loading international options…</span>
             </div>
           ) : (
-            <InternationalResults
-              data={international}
-              onAddToCart={onAddToCart}
-              onCheckout={(o) => onSelect(o)}
-            />
+            <InternationalResults data={international} onSelect={onSelect} />
           )}
           </div>
         </TabsContent>
