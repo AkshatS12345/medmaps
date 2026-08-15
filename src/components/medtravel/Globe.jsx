@@ -89,12 +89,14 @@ export default function Globe({ markers = [], legend = [], picks = [], onPick })
         phi: phiRef.current,
         theta: thetaRef.current,
         dark: 1,
-        diffuse: 1.4,
-        mapSamples: 20000,
-        mapBrightness: 6,
-        baseColor: [0.06, 0.12, 0.27],
-        markerColor: [0.16, 0.95, 0.7],
-        glowColor: [0.06, 0.7, 0.6],
+        diffuse: 1.1,
+        mapSamples: 32000,
+        mapBrightness: 11,
+        // Slate-blue ocean, brighter landmass dots, and a low-saturation
+        // atmosphere. A strong glowColor renders as a hard neon ring.
+        baseColor: [0.13, 0.19, 0.32],
+        markerColor: [0.36, 0.96, 0.78],
+        glowColor: [0.11, 0.22, 0.32],
         markers,
         onRender: (state) => {
           state.width = canvas.clientWidth || w;
