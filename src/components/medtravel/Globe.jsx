@@ -50,7 +50,9 @@ export default function Globe({ markers = [], legend = [], picks = [], onPick })
     const measure = () => {
       const w = el.clientWidth;
       const h = el.clientHeight;
-      setBox(Math.round(Math.min(Math.min(w, h) * 1.25, h * 0.98, w)));
+      if (!w || !h) return;
+      // Leave room for the caption strip so the sphere sits optically centred.
+      setBox(Math.round(Math.min(Math.min(w, h) * 1.2, h - 56, w)));
     };
     const ro = new ResizeObserver(measure);
     ro.observe(el);
@@ -159,7 +161,7 @@ export default function Globe({ markers = [], legend = [], picks = [], onPick })
 
   return (
     <div ref={wrapRef} className="absolute inset-0">
-      <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+      <div className="absolute inset-0 bottom-8 flex items-center justify-center overflow-hidden">
         <canvas
           ref={canvasRef}
           onPointerDown={onPointerDown}
@@ -169,7 +171,7 @@ export default function Globe({ markers = [], legend = [], picks = [], onPick })
             endDrag(e);
           }}
           onPointerLeave={endDrag}
-          className="touch-none select-none"
+          className="touch-none select-none block"
           style={{
             width: box ? `${box}px` : "100%",
             height: box ? `${box}px` : "100%",
