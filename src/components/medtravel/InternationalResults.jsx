@@ -90,7 +90,7 @@ function RiskPanel({ o }) {
   );
 }
 
-function Card({ o }) {
+function Card({ o, onAddToCart }) {
   const excluded = o.excluded_by_constraint;
   const savings = Number(o.savings_vs_domestic) || 0;
   return (
@@ -156,11 +156,20 @@ function Card({ o }) {
           {o.reasoning}
         </p>
       )}
+
+      <button
+        type="button"
+        onClick={() => onAddToCart?.(o)}
+        disabled={o.excluded_by_constraint}
+        className="mt-3 w-full h-9 rounded-lg bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors"
+      >
+        Add to Cart
+      </button>
     </div>
   );
 }
 
-export default function InternationalResults({ data }) {
+export default function InternationalResults({ data, onAddToCart }) {
   if (!data) return null;
   const { options, degraded } = data;
   const list = Array.isArray(options) ? options : [];
@@ -172,7 +181,7 @@ export default function InternationalResults({ data }) {
       {top && <RiskPanel o={top} />}
       <div className="space-y-3">
         {list.map((o, i) => (
-          <Card key={i} o={o} />
+          <Card key={i} o={o} onAddToCart={onAddToCart} />
         ))}
       </div>
     </div>

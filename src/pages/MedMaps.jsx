@@ -74,22 +74,24 @@ export default function MedMaps() {
   const [compareLoading, setCompareLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("domestic");
   const [checkout, setCheckout] = useState(null);
-  const { count, openCart } = useCart();
+  const [error, setError] = useState(null);
+  const { count, openCart, addItem } = useCart();
 
   const handleSubmit = async (form) => {
+    console.log("[MedMaps] handleSubmit start", { sessionId, form });
     setStatus("loading");
+    setError(null);
+    setDomestic(null);
+    setInternational(null);
+    setExplainProse("");
     try {
       const text = buildText(form);
+      console.log("[MedMaps] POST /intake", { sessionId, text });
       const intakeRes = await api.intake(sessionId, text);
+      console.log("[MedMaps] /intake done", intakeRes);
       setIntake(intakeRes);
 
-      // Fire /explain + LLM in the background while the domestic quote loads.
-      setExplainLoading(true);
-      runExplain(sessionId, intakeRes.procedure_name)
-        .then(setExplainProse)
-        .catch(() => {})
-        .finally(() => setExplainLoading(false));
-
+      console.log("[MedMaps] POST /quote/domestic");
       const dom = await api.quoteDomestic(sessionId, {
         procedure_name: intakeRes.procedure_name,
         user_deductible: intakeRes.user_deductible,
@@ -97,12 +99,41 @@ export default function MedMaps() {
         state: intakeRes.state,
         plan_id: form.plan_id,
       });
+      console.log("[MedMaps] /quote/domestic done", dom);
       setDomestic(dom);
-      setInternational(null);
-      setExplainProse("");
       setActiveTab("domestic");
+      // Render domestic immediately — don't wait for international.
       setStatus("results");
-    } catch {
+
+      // /explain runs InvokeLLM (slow). Fire it only after results are on
+      // screen, in its own try/catch, so it can never gate the table.
+      setExplainLoading(true);
+      runExplain(sessionId, intakeRes.procedure_name)
+        .then((prose) => {
+          console.log("[MedMaps] /explain done");
+          setExplainProse(prose);
+        })
+        .catch((e) => console.warn("[MedMaps] /explain failed", e))
+        .finally(() => setExplainLoading(false));
+
+      // International auto-loads right after domestic, populating its tab.
+      setCompareLoading(true);
+      try {
+        console.log("[MedMaps] POST /quote/international");
+        const intl = await api.quoteInternational(
+          sessionId,
+          intakeRes.procedure_name
+        );
+        console.log("[MedMaps] /quote/international done", intl);
+        setInternational(intl);
+      } catch (e) {
+        console.error("[MedMaps] /quote/international failed", e);
+      } finally {
+        setCompareLoading(false);
+      }
+    } catch (e) {
+      console.error("[MedMaps] handleSubmit failed", e);
+      setError(e?.message || String(e));
       setStatus("idle");
     }
   };
@@ -120,7 +151,7 @@ export default function MedMaps() {
   };
 
   const handleCheckout = async (option) => {
-    const hospitalId = option.id || option.name;
+    const hospitalId = option.hospital_id || option.id || option.name;
     try {
       const res = await api.checkout(sessionId, hospitalId);
       setCheckout(res);
@@ -130,6 +161,30 @@ export default function MedMaps() {
   };
 
   const handleBack = () => setStatus("idle");
+
+  // Adds a hospital's real API fields (name, base_cost, expected_cost) to the
+  // cart. Works for both domestic (expected_cost) and international (true_cost).
+  const handleAddToCart = (option) => {
+    const location = [option.city, option.state || option.country]
+      .filter(Boolean)
+      .join(", ");
+    const unitPrice =
+      Number(option.expected_cost ?? option.true_cost ?? option.base_cost) || 0;
+    addItem({
+      category: "procedure",
+      itemName: `${intake?.procedure_name || "Procedure"} — ${option.name}`,
+      description: `${option.name}${location ? ", " + location : ""}`,
+      provider: option.name,
+      location,
+      unitPrice,
+      quantity: 1,
+      metadata: {
+        base_cost: option.base_cost,
+        expected_cost: option.expected_cost ?? option.true_cost,
+        hospital_id: option.hospital_id,
+      },
+    });
+  };
 
   return (
     <div className="h-screen flex flex-col bg-slate-950 text-white overflow-hidden">
@@ -151,6 +206,21 @@ export default function MedMaps() {
                   onCalculate={handleSubmit}
                   calculating={status === "loading"}
                 />
+                {error && (
+                  <div className="mt-3 w-full max-w-md rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm">
+                    <p className="font-semibold text-red-200">
+                      Something went wrong
+                    </p>
+                    <p className="text-red-200/80 text-xs mt-0.5">{error}</p>
+                    <button
+                      type="button"
+                      onClick={() => setError(null)}
+                      className="mt-1.5 text-xs text-red-300 hover:text-white underline"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -188,7 +258,7 @@ export default function MedMaps() {
                   compareLoading={compareLoading}
                   activeTab={activeTab}
                   onTabChange={setActiveTab}
-                  onCompareInternational={handleCompareInternational}
+                  onAddToCart={handleAddToCart}
                   onCheckout={handleCheckout}
                   onBack={handleBack}
                 />

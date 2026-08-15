@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowLeft, Loader2, Globe2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import FactsChips from "./FactsChips";
 import DomesticResults from "./DomesticResults";
@@ -15,7 +15,7 @@ export default function RightResultsPanel({
   compareLoading,
   activeTab,
   onTabChange,
-  onCompareInternational,
+  onAddToCart,
   onCheckout,
   onBack,
 }) {
@@ -78,21 +78,12 @@ export default function RightResultsPanel({
           value="domestic"
           className="flex-1 overflow-y-auto px-5 py-4 space-y-4 mt-0 data-[state=inactive]:hidden"
         >
-          <DomesticResults data={domestic} onCheckout={onCheckout} />
+          <DomesticResults
+            data={domestic}
+            onCheckout={onCheckout}
+            onAddToCart={onAddToCart}
+          />
           <ExplanationPanel prose={explainProse} loading={explainLoading} />
-          <button
-            type="button"
-            onClick={onCompareInternational}
-            disabled={compareLoading}
-            className="w-full h-10 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-70 text-white text-sm font-semibold flex items-center justify-center gap-2 transition-colors"
-          >
-            {compareLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Globe2 className="w-4 h-4" />
-            )}
-            Compare International Options
-          </button>
         </TabsContent>
 
         <TabsContent
@@ -105,7 +96,10 @@ export default function RightResultsPanel({
               <span className="text-sm">Loading international options…</span>
             </div>
           ) : (
-            <InternationalResults data={international} />
+            <InternationalResults
+              data={international}
+              onAddToCart={onAddToCart}
+            />
           )}
         </TabsContent>
       </Tabs>

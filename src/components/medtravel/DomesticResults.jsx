@@ -34,7 +34,7 @@ function RankInversion({ ri }) {
   );
 }
 
-function OptionsTable({ options, onCheckout }) {
+function OptionsTable({ options, onCheckout, onAddToCart }) {
   // Options arrive sorted by expected cost. Do not re-sort.
   return (
     <div className="rounded-2xl bg-slate-800/40 border border-white/10 overflow-hidden">
@@ -79,13 +79,22 @@ function OptionsTable({ options, onCheckout }) {
                   </span>
                 </td>
                 <td className="px-3 py-2.5 text-right">
-                  <button
-                    type="button"
-                    onClick={() => onCheckout(o)}
-                    className="text-xs rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white px-2.5 py-1 font-semibold transition-colors"
-                  >
-                    Book
-                  </button>
+                  <div className="flex items-center justify-end gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => onAddToCart?.(o)}
+                      className="text-xs rounded-lg bg-slate-700 hover:bg-slate-600 text-white px-2.5 py-1 font-semibold transition-colors"
+                    >
+                      Add to Cart
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onCheckout(o)}
+                      className="text-xs rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white px-2.5 py-1 font-semibold transition-colors"
+                    >
+                      Book
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -96,7 +105,7 @@ function OptionsTable({ options, onCheckout }) {
   );
 }
 
-export default function DomesticResults({ data, onCheckout }) {
+export default function DomesticResults({ data, onCheckout, onAddToCart }) {
   if (!data) return null;
   const { options, price_spread, rank_inversion, degraded } = data;
   return (
@@ -107,7 +116,11 @@ export default function DomesticResults({ data, onCheckout }) {
       <Spread spread={price_spread} />
       <RankInversion ri={rank_inversion} />
       {Array.isArray(options) && options.length > 0 && (
-        <OptionsTable options={options} onCheckout={onCheckout} />
+        <OptionsTable
+          options={options}
+          onCheckout={onCheckout}
+          onAddToCart={onAddToCart}
+        />
       )}
     </div>
   );
