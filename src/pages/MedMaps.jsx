@@ -6,7 +6,7 @@ import LeftIntakePanel from "@/components/medtravel/LeftIntakePanel";
 import RightResultsPanel from "@/components/medtravel/RightResultsPanel";
 
 import CheckoutModal from "@/components/medtravel/CheckoutModal";
-import { useCart } from "@/context/CartContext";
+
 import { api, generateSessionId } from "@/lib/api";
 import { base44 } from "@/api/base44Client";
 
@@ -178,7 +178,7 @@ export default function MedMaps() {
   const [error, setError] = useState(null);
   // A facility chosen from a card, the globe, or a marker — drives TripBuilder.
   const [selected, setSelected] = useState(null);
-  const { count, openCart, addItem } = useCart();
+
 
   const handleSubmit = async (form) => {
     console.log("[MedMaps] handleSubmit start", { sessionId, form });
@@ -267,64 +267,6 @@ export default function MedMaps() {
 
   const handleBack = () => setStatus("idle");
 
-  // Adds a hospital's real API fields (name, base_cost, expected_cost) to the
-  // cart. Works for both domestic (expected_cost) and international (true_cost).
-  const handleAddToCart = (option) => {
-    const location = [option.city, option.state || option.country]
-      .filter(Boolean)
-      .join(", ");
-    const unitPrice =
-      Number(option.expected_cost ?? option.true_cost ?? option.base_cost) || 0;
-    addItem({
-      category: "procedure",
-      itemName: `${intake?.procedure_name || "Procedure"} — ${option.name}`,
-      description: `${option.name}${location ? ", " + location : ""}`,
-      provider: option.name,
-      location,
-      unitPrice,
-      quantity: 1,
-      metadata: {
-        base_cost: option.base_cost,
-        expected_cost: option.expected_cost ?? option.true_cost,
-        hospital_id: option.hospital_id,
-      },
-    });
-
-    // A chosen flight is its own line item.
-    if (option.flight) {
-      addItem({
-        category: "flight",
-        itemName: `${option.flight.carrier} — ${option.flight.origin}→${option.flight.destination}`,
-        description: `${
-          option.flight.stops === 0 ? "Non-stop" : `${option.flight.stops} stop`
-        } · ${option.flight.duration}`,
-        provider: option.flight.carrier,
-        location,
-        unitPrice: Number(option.flight.price) || 0,
-        quantity: 1,
-        metadata: { flight_id: option.flight.flight_id },
-      });
-    }
-
-    // A chosen recovery hotel is a separate real line item, not part of the procedure.
-    if (option.hotel) {
-      addItem({
-        category: "hotel",
-        itemName: option.hotel.name,
-        description: `${option.hotel.nights} nights, ${option.hotel.distance_miles} mi from ${option.name}`,
-        provider: option.hotel.name,
-        location,
-        unitPrice: Number(option.hotel.total) || 0,
-        quantity: 1,
-        metadata: {
-          nightly_rate: option.hotel.nightly_rate,
-          distance_miles: option.hotel.distance_miles,
-          source: "OpenStreetMap",
-        },
-      });
-    }
-  };
-
   return (
     <div className="h-screen flex flex-col bg-slate-950 text-white overflow-hidden">
       <Header />
@@ -407,7 +349,6 @@ export default function MedMaps() {
                   onTabChange={setActiveTab}
                   selected={selected}
                   onSelect={setSelected}
-                  onAddToCart={handleAddToCart}
                   onCheckout={handleCheckout}
                   onBack={handleBack}
                 />
