@@ -27,6 +27,10 @@ function buildText(form) {
   parts.push(`I'm looking to schedule a ${form.procedure}.`);
   if (form.plan_id && form.planLabel) {
     parts.push(`My insurance is ${form.planLabel}.`);
+  } else if (form.coverage === "high_deductible") {
+    parts.push(`I'm on a high-deductible health plan.`);
+  } else if (form.coverage === "standard") {
+    parts.push(`I'm on a standard employer health plan.`);
   } else {
     parts.push(`I'm uninsured.`);
   }
