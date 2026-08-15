@@ -4,7 +4,7 @@ import createGlobe from "cobe";
 // Realistic 3D Earth rendered with cobe. Drag to spin it; release and it
 // resumes its slow automatic rotation. Markers are the actual destinations
 // returned by the API, sized by how much that option saves.
-export default function Globe({ markers = [], onMarkerHint }) {
+export default function Globe({ markers = [], legend = [] }) {
   const canvasRef = useRef(null);
   const pointerStart = useRef(null);
   const phiRef = useRef(0);
@@ -110,9 +110,39 @@ export default function Globe({ markers = [], onMarkerHint }) {
           cursor: dragging ? "grabbing" : "grab",
         }}
       />
-      {markers.length > 0 && (
+      {legend.length > 0 && (
+        <div className="absolute top-4 left-4 right-4 pointer-events-none">
+          <p className="text-[10px] uppercase tracking-wide text-slate-500 mb-1.5">
+            Best destinations · marker size = savings
+          </p>
+          <div className="space-y-1">
+            {legend.map((l) => (
+              <div
+                key={l.country}
+                className="flex items-center justify-between gap-3 rounded-lg bg-slate-900/70 backdrop-blur-sm border border-white/10 px-2.5 py-1.5 max-w-[280px]"
+              >
+                <span className="text-xs text-white truncate">{l.country}</span>
+                <span
+                  className={`text-xs font-semibold flex-shrink-0 ${
+                    l.savings >= 0 ? "text-emerald-400" : "text-red-400"
+                  }`}
+                >
+                  {l.savings >= 0 ? "+" : ""}
+                  {Math.round(l.savings).toLocaleString("en-US", {
+                    style: "currency",
+                    currency: "USD",
+                    maximumFractionDigits: 0,
+                  })}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {markers.length > 1 && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-[11px] text-slate-400/80 pointer-events-none">
-          {markers.length} destination{markers.length === 1 ? "" : "s"} · drag to rotate
+          {markers.length - 1} destination{markers.length === 2 ? "" : "s"} from JFK · drag to rotate
         </div>
       )}
     </div>
