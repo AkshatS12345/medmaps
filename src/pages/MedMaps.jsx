@@ -317,37 +317,36 @@ export default function MedMaps() {
             )}
           </AnimatePresence>
 
-          {/* Globe — starts on the right half, slides to the left half */}
-          <motion.div
-            className="absolute top-0 left-1/2 h-full w-1/2"
-            style={{
-              background:
-                "radial-gradient(circle at 50% 50%, rgba(13,148,136,0.12), transparent 60%)",
-            }}
-            animate={{ x: status === "results" ? "-100%" : "0%" }}
-            transition={{ duration: DURATION, ease: EASE }}
-          >
-            <Globe
-              markers={globeMarkers(international)}
-              legend={selected ? [] : globeLegend(international)}
-              picks={globePicks(international)}
-              onPick={(o) => {
-                if (!o) return;
-                setSelected(o);
-                setActiveTab("international");
-              }}
-            />
-          </motion.div>
+          {/* Globe lives on the intake screen only. In results it was taking half
+              the viewport to show decoration while the data fought for space. */}
+          <AnimatePresence>
+            {status !== "results" && (
+              <motion.div
+                key="globe"
+                className="absolute top-0 left-1/2 h-full w-1/2"
+                style={{
+                  background:
+                    "radial-gradient(circle at 50% 50%, rgba(13,148,136,0.12), transparent 60%)",
+                }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: DURATION, ease: EASE }}
+              >
+                <Globe markers={globeMarkers(international)} />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          {/* Results panel — right half, slides in from the right */}
+          {/* Results take the full width. */}
           <AnimatePresence>
             {status === "results" && (
               <motion.div
                 key="results"
-                className="absolute top-0 left-1/2 h-full w-1/2"
-                initial={{ x: "100%" }}
-                animate={{ x: 0 }}
-                exit={{ x: "100%" }}
+                className="absolute inset-0"
+                initial={{ opacity: 0, x: 40 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 40 }}
                 transition={{ duration: DURATION, ease: EASE }}
               >
                 <RightResultsPanel

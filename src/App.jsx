@@ -8,6 +8,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 // Add page imports here
 import MedMaps from '@/pages/MedMaps';
+import Cart from '@/pages/Cart';
 import { CartProvider } from '@/context/CartContext';
 import CartDrawer from '@/components/medtravel/CartDrawer';
 
@@ -39,6 +40,7 @@ const AuthenticatedApp = () => {
     <Routes>
       {/* Add your page Route elements here */}
       <Route path="/" element={<MedMaps />} />
+      <Route path="/cart" element={<Cart />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
