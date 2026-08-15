@@ -47,6 +47,8 @@ export const api = {
         nights ? `&nights=${nights}` : ""
       }`
     ),
-  checkout: (session_id, hospital_id, hotel_name) =>
-    postJson("/checkout", { session_id, hospital_id, hotel_name }),
+  flights: (hospital_id) =>
+    getJson(`/flights?hospital_id=${encodeURIComponent(hospital_id)}`),
+  checkout: (session_id, hospital_id, hotel_name, flight_id) =>
+    postJson("/checkout", { session_id, hospital_id, hotel_name, flight_id }),
 };
