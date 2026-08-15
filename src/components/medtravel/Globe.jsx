@@ -4,13 +4,54 @@ import createGlobe from "cobe";
 // Realistic 3D Earth rendered with cobe. Drag to spin it; release and it
 // resumes its slow automatic rotation. Markers are the actual destinations
 // returned by the API, sized by how much that option saves.
-export default function Globe({ markers = [], legend = [] }) {
+// Project a lat/lon onto the rendered sphere. cobe exposes no hit-testing, so
+// clickable destinations are HTML dots positioned with the same maths cobe uses.
+function project(lat, lon, phi, theta, size) {
+  const latR = (lat * Math.PI) / 180;
+  const lonR = (lon * Math.PI) / 180;
+  const x0 = Math.cos(latR) * Math.sin(lonR + phi);
+  const y0 = Math.sin(latR);
+  const z0 = Math.cos(latR) * Math.cos(lonR + phi);
+  // Tilt around the X axis by theta.
+  const y = y0 * Math.cos(theta) - z0 * Math.sin(theta);
+  const z = y0 * Math.sin(theta) + z0 * Math.cos(theta);
+  const r = size * 0.42;
+  return { x: size / 2 + x0 * r, y: size / 2 - y * r, visible: z > 0 };
+}
+
+export default function Globe({ markers = [], legend = [], picks = [], onPick }) {
   const canvasRef = useRef(null);
+  const wrapRef = useRef(null);
   const pointerStart = useRef(null);
   const phiRef = useRef(0);
   const thetaRef = useRef(0.3);
   const autoRef = useRef(true);
   const [dragging, setDragging] = useState(false);
+  const [, force] = useState(0);
+  const [box, setBox] = useState(0);
+  const movedRef = useRef(false);
+
+  // Re-render the HTML overlay in step with the spin.
+  useEffect(() => {
+    let raf;
+    const tick = () => {
+      force((n) => (n + 1) % 1000000);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() =>
+      setBox(Math.min(el.clientWidth, el.clientHeight))
+    );
+    ro.observe(el);
+    setBox(Math.min(el.clientWidth, el.clientHeight));
+    return () => ro.disconnect();
+  }, []);
 
   // Re-create the globe whenever the marker set changes — cobe fixes markers
   // at construction time, so mutating them in onRender has no effect.
@@ -71,6 +112,7 @@ export default function Globe({ markers = [], legend = [] }) {
   const onPointerDown = (e) => {
     pointerStart.current = { x: e.clientX, y: e.clientY, phi: phiRef.current, theta: thetaRef.current };
     autoRef.current = false;
+    movedRef.current = false;
     setDragging(true);
     e.currentTarget.setPointerCapture?.(e.pointerId);
   };
@@ -78,6 +120,9 @@ export default function Globe({ markers = [], legend = [] }) {
   const onPointerMove = (e) => {
     const s = pointerStart.current;
     if (!s) return;
+    if (Math.abs(e.clientX - s.x) > 3 || Math.abs(e.clientY - s.y) > 3) {
+      movedRef.current = true;
+    }
     phiRef.current = s.phi + (e.clientX - s.x) * 0.005;
     // Clamp tilt so the poles never flip past vertical.
     thetaRef.current = Math.max(
@@ -95,8 +140,17 @@ export default function Globe({ markers = [], legend = [] }) {
     }, 1200);
   };
 
+  const overlay = box
+    ? picks
+        .map((p) => ({
+          ...p,
+          pos: project(p.lat, p.lon, phiRef.current, thetaRef.current, box),
+        }))
+        .filter((p) => p.pos.visible)
+    : [];
+
   return (
-    <div className="absolute inset-0">
+    <div ref={wrapRef} className="absolute inset-0">
       <canvas
         ref={canvasRef}
         onPointerDown={onPointerDown}
