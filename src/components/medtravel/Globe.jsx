@@ -2,9 +2,14 @@ import React, { useEffect, useRef } from "react";
 import createGlobe from "cobe";
 
 // Realistic 3D Earth rendered with cobe: deep-blue oceans, glowing teal
-// landmasses, slow automatic Y-axis spin. Fills its parent container.
-export default function Globe() {
+// landmasses + facility markers, slow automatic Y-axis spin.
+export default function Globe({ markers = [] }) {
   const canvasRef = useRef(null);
+  const markersRef = useRef(markers);
+
+  useEffect(() => {
+    markersRef.current = markers;
+  }, [markers]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -40,7 +45,7 @@ export default function Globe() {
         baseColor: [0.06, 0.12, 0.27], // deep blue oceans
         markerColor: [0.16, 0.95, 0.7], // teal landmasses
         glowColor: [0.06, 0.7, 0.6], // teal atmosphere glow
-        markers: [],
+        markers: markersRef.current,
         onRender: (state) => {
           state.width = canvas.clientWidth || w;
           state.height = canvas.clientHeight || h;

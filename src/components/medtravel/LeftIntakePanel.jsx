@@ -1,25 +1,10 @@
 import React, { useState } from "react";
-import { Sparkles, ScanSearch } from "lucide-react";
+import { Sparkles, ScanSearch, Loader2 } from "lucide-react";
 
-const PROCEDURES = [
-  "Knee Replacement",
-  "Hip Replacement",
-  "Lasik",
-  "Cataract Surgery",
-  "Coronary Bypass",
-];
-
-const INSURERS = [
-  "Blue Cross",
-  "Aetna",
-  "UnitedHealthcare",
-  "Cigna",
-  "Humana",
-  "Uninsured",
-];
+const PROCEDURES = ["Knee Replacement", "Hip Replacement", "Lasik"];
 
 const inputClass =
-  "inline-block border-b-2 border-blue-500 bg-transparent text-white font-bold text-center outline-none px-1 rounded-none focus:border-emerald-400 transition-colors";
+  "inline-block border-b-2 border-blue-400/80 bg-transparent text-white font-semibold text-center outline-none px-1 rounded-none focus:border-emerald-400 transition-colors";
 
 const selectStyle = {
   backgroundImage:
@@ -32,18 +17,26 @@ const selectStyle = {
   MozAppearance: "none",
 };
 
+const defaultDate = (() => {
+  const d = new Date();
+  d.setMonth(d.getMonth() + 3);
+  return d.toISOString().slice(0, 10);
+})();
+
 export default function LeftIntakePanel({ onCalculate, calculating }) {
   const [name, setName] = useState("David");
+  const [location, setLocation] = useState("New York, NY");
   const [age, setAge] = useState(54);
   const [procedure, setProcedure] = useState(PROCEDURES[0]);
-  const [insurer, setInsurer] = useState(INSURERS[0]);
+  const [targetDate, setTargetDate] = useState(defaultDate);
+  const [plan, setPlan] = useState("");
   const [deductible, setDeductible] = useState(5000);
 
   return (
-    <div className="w-full max-w-md mx-auto">
+    <div className="w-full max-w-md">
       <div className="rounded-2xl bg-slate-800/50 backdrop-blur-xl shadow-2xl border border-white/10 overflow-hidden">
         {/* Title */}
-        <div className="px-6 pt-6 pb-4 border-b border-white/10">
+        <div className="px-6 pt-5 pb-4 border-b border-white/10">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-blue-500/25 border border-blue-400/30 flex items-center justify-center">
               <Sparkles className="w-4.5 h-4.5 text-blue-200" />
@@ -69,8 +62,16 @@ export default function LeftIntakePanel({ onCalculate, calculating }) {
               onChange={(e) => setName(e.target.value)}
               className={`${inputClass} w-24`}
               aria-label="Name"
-            />{" "}
-            and I am{" "}
+            />
+            , I am currently located in{" "}
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className={`${inputClass} w-32`}
+              aria-label="City / State"
+            />
+            , and I am{" "}
             <input
               type="number"
               min={0}
@@ -79,12 +80,12 @@ export default function LeftIntakePanel({ onCalculate, calculating }) {
               className={`${inputClass} w-12`}
               aria-label="Age"
             />{" "}
-            years old. I am currently looking for an affordable{" "}
+            years old. I am looking to schedule a{" "}
             <select
               value={procedure}
               onChange={(e) => setProcedure(e.target.value)}
               style={selectStyle}
-              className={`${inputClass} w-40 pr-6`}
+              className={`${inputClass} w-36 pr-6`}
               aria-label="Procedure Type"
             >
               {PROCEDURES.map((p) => (
@@ -93,21 +94,24 @@ export default function LeftIntakePanel({ onCalculate, calculating }) {
                 </option>
               ))}
             </select>{" "}
-            procedure. My current health insurance is through{" "}
-            <select
-              value={insurer}
-              onChange={(e) => setInsurer(e.target.value)}
-              style={selectStyle}
-              className={`${inputClass} w-32 pr-6`}
-              aria-label="Insurance Provider"
-            >
-              {INSURERS.map((i) => (
-                <option key={i} className="bg-slate-800 text-white">
-                  {i}
-                </option>
-              ))}
-            </select>{" "}
-            and my remaining deductible is ${" "}
+            on or around{" "}
+            <input
+              type="date"
+              value={targetDate}
+              onChange={(e) => setTargetDate(e.target.value)}
+              className={`${inputClass} w-40 [color-scheme:dark]`}
+              aria-label="Target Date"
+            />
+            . My insurance coverage is under{" "}
+            <input
+              type="text"
+              value={plan}
+              onChange={(e) => setPlan(e.target.value)}
+              placeholder="e.g., Blue Cross Blue Shield PPO Gold"
+              className={`${inputClass} w-44 placeholder:text-slate-500`}
+              aria-label="Provider & Plan Name"
+            />{" "}
+            with a remaining deductible of ${" "}
             <input
               type="number"
               min={0}
@@ -127,7 +131,11 @@ export default function LeftIntakePanel({ onCalculate, calculating }) {
             disabled={calculating}
             className="w-full h-12 rounded-xl bg-emerald-500 text-white font-semibold text-base flex items-center justify-center gap-2.5 hover:bg-emerald-400 transition-colors shadow-[0_0_30px_rgba(16,185,129,0.45)] disabled:opacity-70 disabled:shadow-none"
           >
-            <ScanSearch className="w-5 h-5" />
+            {calculating ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <ScanSearch className="w-5 h-5" />
+            )}
             {calculating ? "Scanning global options…" : "Scan Global Options & Calculate Costs"}
           </button>
         </div>
